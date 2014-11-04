@@ -1,0 +1,14 @@
+﻿{
+    "version": "1.0.0-*",
+    "dependencies": {
+    },
+
+    "frameworks": {
+        "aspnet50": {
+            "frameworkAssemblies": {
+                "System.Security": "",
+                "System.IO.Compression":  ""
+            }
+        }
+    }
+}

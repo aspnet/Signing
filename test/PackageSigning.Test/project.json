@@ -1,0 +1,18 @@
+﻿{
+  "version": "1.0.0-*",
+  "dependencies": {
+    "Xunit.KRunner": "1.0.0-beta1",
+    "PackageSigning": ""
+  },
+  "commands": {
+    "test": "Xunit.KRunner"
+  },
+  "frameworks": {
+    "aspnet50": {
+      "frameworkAssemblies": {
+        "System.Security": "",
+        "System.IO.Compression": ""
+      }
+    }
+  }
+}
