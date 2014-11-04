@@ -22,13 +22,7 @@ namespace PackageSigning
 
         internal static FileSigner FromX509Data(KeyInfoX509Data x509data)
         {
-            var certificates = x509data.Certificates.Cast<X509Certificate2>();
-            var subjectCert = certificates.FirstOrDefault();
-            var keyIdentifierExtension = subjectCert?.Extensions?.OfType<X509SubjectKeyIdentifierExtension>()?.FirstOrDefault();
-            return new FileSigner(
-                subjectCert?.Subject,
-                keyIdentifierExtension?.SubjectKeyIdentifier,
-                certificates);
+
         }
     }
 }
