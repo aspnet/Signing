@@ -7,9 +7,15 @@ namespace PackageSigning
 {
     public class TrustContext
     {
-        public bool UseRootTrust { get; set; } = true;
-        public X509Certificate2Collection AdditionalTrustedRoots { get; } = new X509Certificate2Collection();
-        public IList<TrustedPublisher> TrustedPublishers { get; } = new List<TrustedPublisher>();
+        public bool UseRootTrust
+        { get; set; }
+        = true;
+        public X509Certificate2Collection AdditionalTrustedRoots
+        { get; }
+        = new X509Certificate2Collection();
+        public IList<TrustedPublisher> TrustedPublishers
+        { get; }
+        = new List<TrustedPublisher>();
 
         public virtual TrustResult IsTrusted(Signature signature)
         {
@@ -28,7 +34,8 @@ namespace PackageSigning
             var rootTrusted = chain.Build(signer.SignerCertificate);
             if (rootTrusted && UseRootTrust)
             {
-                return new TrustResult(new[] {
+                return new TrustResult(new[]
+                {
                     TrustedPublisher.FromCertificate(chain.ChainElements[chain.ChainElements.Count - 1].Certificate)
                 });
             }

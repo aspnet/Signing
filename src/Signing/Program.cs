@@ -116,7 +116,7 @@ namespace PackageSigning
                     AnsiConsole.Error.WriteLine("Certificate file has no certificates: " + certificates);
                     return -1;
                 }
-                signingCert = certs[0];
+                signingCert = new X509Certificate2(certificates, password);
             }
             else
             {

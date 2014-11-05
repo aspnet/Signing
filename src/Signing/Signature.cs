@@ -99,10 +99,10 @@ namespace PackageSigning
                 identifierType = SubjectIdentifierType.IssuerAndSerialNumber;
             }
 
-            if (!HasEku(cert, CodeSigningEKUOid))
-            {
-                throw new Exception("Signing certificate must have the codeSigning extended key usage (OID: 1.3.6.1.5.5.7.3.3)");
-            }
+            // if (!HasEku(cert, CodeSigningEKUOid))
+            // {
+            //     throw new Exception("Signing certificate must have the codeSigning extended key usage (OID: 1.3.6.1.5.5.7.3.3)");
+            // }
 
             // Create a content info and start a signed CMS
             var contentInfo = new ContentInfo(targetData);
