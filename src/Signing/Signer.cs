@@ -13,10 +13,10 @@ namespace PackageSigning
         public string Subject { get; private set; }
         public string Spki { get; private set; }
         public X509Certificate2 SignerCertificate { get; private set; }
-        public IEnumerable<X509Certificate2> Certificates { get; private set; }
+        public X509Certificate2Collection Certificates { get; private set; }
         public IEnumerable<Signer> CounterSigners { get; private set; }
 
-        private Signer(string subject, string spki, X509Certificate2 signerCertificate, IEnumerable<X509Certificate2> certificates)
+        private Signer(string subject, string spki, X509Certificate2 signerCertificate, X509Certificate2Collection certificates)
         {
             Subject = subject;
             Spki = spki;
@@ -24,7 +24,7 @@ namespace PackageSigning
             SignerCertificate = signerCertificate;
         }
 
-        internal static Signer FromSignerInfo(SignerInfo signerInfo, IEnumerable<X509Certificate2> certificates, HashAlgorithm publicKeyIdentifierHashAlgorithm)
+        internal static Signer FromSignerInfo(SignerInfo signerInfo, X509Certificate2Collection certificates, HashAlgorithm publicKeyIdentifierHashAlgorithm)
         {
             return new Signer(
                 signerInfo.Certificate.Subject,

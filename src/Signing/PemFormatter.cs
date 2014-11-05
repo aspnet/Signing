@@ -29,7 +29,7 @@ namespace PackageSigning
 
         }
 
-        private static readonly Regex PemParser = new Regex(@"\-*[^\-]*\-*(?<data>.*)\-*[^\-]*\-*");
+        private static readonly Regex PemParser = new Regex(@"^(\-+[^\-]+\-+)\s*(?<data>[^\-]+)\s*(\-+[^\-]+\-+)$");
         public static byte[] Unformat(byte[] pemData)
         {
             string data = Encoding.UTF8.GetString(pemData);
@@ -38,8 +38,8 @@ namespace PackageSigning
             {
                 throw new FormatException("Invalid PEM file!");
             }
-            return Convert.FromBase64String(
-                match.Groups["data"].Value.Replace("\r", "").Replace("\n", ""));
+            string base64 = match.Groups["data"].Value.Replace("\r", "").Replace("\n", "");
+            return Convert.FromBase64String(base64);
         }
     }
 }

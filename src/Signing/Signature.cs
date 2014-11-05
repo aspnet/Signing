@@ -12,15 +12,24 @@ namespace PackageSigning
 {
     public class Signature
     {
-        private static readonly HashAlgorithm DefaultHashAlgorithm = new SHA256Managed();
+        public static readonly HashAlgorithm DefaultHashAlgorithm = new SHA256Managed();
         private static readonly string Sha256Oid = "2.16.840.1.101.3.4.2.1";
         private static readonly string CodeSigningEKUOid = "1.3.6.1.5.5.7.3.3";
-        //private static readonly string TimestampingEKUOid = "1.3.6.1.5.5.7.3.8";
 
         private SignedCms _signedCms;
 
-        public Signer Signer
-        { get; private set; }
+        public Signer Signer { get; private set; }
+        public DateTime? ValidFromUtc { get; private set; }
+        public DateTime? ValidToUtc { get; private set; }
+        public DateTime TimestampUtc { get; private set; }
+
+        public bool WithinValidityPeriod {
+            get
+            {
+                return (ValidFromUtc == null || ValidFromUtc.Value <= TimestampUtc) &&
+                    (ValidToUtc == null || ValidToUtc.Value >= TimestampUtc);
+            }
+        }
 
         private Signature(SignedCms signedCms)
         {
@@ -28,7 +37,11 @@ namespace PackageSigning
 
             // Read the signer
             var signerInfo = _signedCms.SignerInfos.Cast<SignerInfo>().FirstOrDefault();
-            Signer = Signer.FromSignerInfo(signerInfo, _signedCms.Certificates.Cast<X509Certificate2>(), DefaultHashAlgorithm);
+            Signer = Signer.FromSignerInfo(signerInfo, _signedCms.Certificates, DefaultHashAlgorithm);
+
+            ValidFromUtc = Signer.SignerCertificate.NotBefore;
+            ValidToUtc = Signer.SignerCertificate.NotAfter;
+            TimestampUtc = DateTime.UtcNow;
         }
 
         public async Task WriteAsync(string fileName)
@@ -53,14 +66,19 @@ namespace PackageSigning
                 footer: "END CMS");
         }
 
-        public static async Task<Signature> SignAsync(string targetFileName, string certificateChain, string password)
+        public static Task<Signature> SignAsync(string targetFileName, string certificateChain, string password)
+        {
+            var cert = new X509Certificate2(certificateChain, password);
+            var chain = new X509Certificate2Collection();
+            chain.Import(certificateChain, password, X509KeyStorageFlags.DefaultKeySet);
+            return SignAsync(targetFileName, cert, chain);
+        }
+
+        public static async Task<Signature> SignAsync(string targetFileName, X509Certificate2 cert, X509Certificate2Collection additionalCertificates)
         {
             using (var strm = new FileStream(targetFileName, FileMode.Open, FileAccess.Read, FileShare.None))
             {
-                var cert = new X509Certificate2(certificateChain, password);
-                var chain = new X509Certificate2Collection();
-                chain.Import(certificateChain, password, X509KeyStorageFlags.DefaultKeySet);
-                return await SignAsync(strm, cert, chain);
+                return await SignAsync(strm, cert, additionalCertificates);
             }
         }
 
@@ -118,6 +136,17 @@ namespace PackageSigning
 
             // Load the signature in to the object
             return new Signature(signedCms);
+        }
+
+        public static async Task<Signature> VerifyAsync(string fileName, string signatureFile)
+        {
+            using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                using (var signatureStream = new FileStream(signatureFile, FileMode.Open, FileAccess.Read, FileShare.None))
+                {
+                    return await VerifyAsync(fileStream, signatureStream);
+                }
+            }
         }
 
         public static async Task<Signature> VerifyAsync(Stream file, Stream signature)
