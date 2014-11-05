@@ -10,12 +10,21 @@ namespace PackageSigning
         {
             header = header ?? "PEM";
             footer = footer ?? header;
+
+            string base64 = Convert.ToBase64String(rawData);
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < base64.Length; i += 64)
+            {
+                var len = Math.Min(64, base64.Length - i);
+                builder.AppendLine(base64.Substring(i, len));
+            }
+
             return Encoding.UTF8.GetBytes(
                 String.Format(
-                    "-----{0}-----{1}{2}{1}-----{3}-----",
+                    "-----{0}-----{1}{2}-----{3}-----",
                     header,
                     Environment.NewLine,
-                    Convert.ToBase64String(rawData),
+                    builder.ToString(),
                     footer));
 
         }

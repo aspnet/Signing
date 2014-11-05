@@ -1,0 +1,9 @@
+[signingcert]
+keyUsage = digitalSignature
+extendedKeyUsage = codeSigning
+subjectKeyIdentifier = hash
+
+[timestampingcert]
+keyUsage = digitalSignature
+extendedKeyUsage = timeStamping
+subjectKeyIdentifier = hash

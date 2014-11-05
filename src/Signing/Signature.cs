@@ -13,11 +13,14 @@ namespace PackageSigning
     public class Signature
     {
         private static readonly HashAlgorithm DefaultHashAlgorithm = new SHA256Managed();
-        private static readonly Oid Sha256Oid = Oid.FromOidValue("2.16.840.1.101.3.4.2.1", OidGroup.HashAlgorithm);
+        private static readonly string Sha256Oid = "2.16.840.1.101.3.4.2.1";
+        private static readonly string CodeSigningEKUOid = "1.3.6.1.5.5.7.3.3";
+        //private static readonly string TimestampingEKUOid = "1.3.6.1.5.5.7.3.8";
 
         private SignedCms _signedCms;
 
-        public Signer Signer { get; private set; }
+        public Signer Signer
+        { get; private set; }
 
         private Signature(SignedCms signedCms)
         {
@@ -44,7 +47,10 @@ namespace PackageSigning
 
         public byte[] ToByteArray()
         {
-            return _signedCms.Encode();
+            return PemFormatter.Format(
+                _signedCms.Encode(),
+                header: "BEGIN CMS",
+                footer: "END CMS");
         }
 
         public static async Task<Signature> SignAsync(string targetFileName, string certificateChain, string password)
@@ -65,13 +71,28 @@ namespace PackageSigning
 
         public static Signature Sign(byte[] targetData, X509Certificate2 cert, X509Certificate2Collection additionalCertificates)
         {
+            // Check that the cert meets the required criteria
+            var identifierType = SubjectIdentifierType.IssuerAndSerialNumber;
+            if (!cert
+                .Extensions
+                .OfType<X509SubjectKeyIdentifierExtension>()
+                .Any())
+            {
+                identifierType = SubjectIdentifierType.IssuerAndSerialNumber;
+            }
+
+            if (!HasEku(cert, CodeSigningEKUOid))
+            {
+                throw new Exception("Signing certificate must have the codeSigning extended key usage (OID: 1.3.6.1.5.5.7.3.3)");
+            }
+
             // Create a content info and start a signed CMS
             var contentInfo = new ContentInfo(targetData);
             var signedCms = new SignedCms(contentInfo, detached: true);
 
             // Create a signer info for the signature
-            var signer = new CmsSigner(SubjectIdentifierType.SubjectKeyIdentifier, cert);
-            signer.DigestAlgorithm = Sha256Oid;
+            var signer = new CmsSigner(identifierType, cert);
+            signer.DigestAlgorithm = Oid.FromOidValue(Sha256Oid, OidGroup.HashAlgorithm);
 
             // We do want the whole chain in the file, but we can't control how
             // CmsSigner builds the chain and add our additional certificates.
@@ -106,15 +127,15 @@ namespace PackageSigning
 
         public static Signature Verify(byte[] file, byte[] signature)
         {
-            //// The file is actually UTF-8 Base-64 Encoded, so decode that
-            //var decoded = PemFormatter.Unformat(signature);
+            // The file is actually UTF-8 Base-64 Encoded, so decode that
+            var decoded = PemFormatter.Unformat(signature);
 
             // Load the content
             var contentInfo = new ContentInfo(file);
 
             // Create a signed cms and decode the signature into it
             var signedCms = new SignedCms(contentInfo, detached: true);
-            signedCms.Decode(signature);
+            signedCms.Decode(decoded);
 
             signedCms.CheckSignature(verifySignatureOnly: true);
 
@@ -133,6 +154,14 @@ namespace PackageSigning
             }
 
             return content;
+        }
+
+        private static bool HasEku(X509Certificate2 cert, string oid)
+        {
+            return cert
+                .Extensions
+                .OfType<X509EnhancedKeyUsageExtension>()
+                .Any(e => e.EnhancedKeyUsages.Cast<Oid>().Any(o => Equals(o.Value, oid)));
         }
     }
 }
