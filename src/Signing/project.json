@@ -1,13 +1,17 @@
 ﻿{
     "version": "1.0.0-*",
     "dependencies": {
+        "Microsoft.Framework.CommandLineUtils": ""
+    },
+
+    "commands": {
+        "run": "run"
     },
 
     "frameworks": {
         "aspnet50": {
             "frameworkAssemblies": {
-                "System.Security": "",
-                "System.IO.Compression":  ""
+                "System.Security": ""
             }
         }
     }
