@@ -1,0 +1,12 @@
+﻿{
+    "version": "1.0.0-*",
+    "dependencies": {
+        "Microsoft.Framework.CommandLineUtils": "1.0.0-*"
+    },
+    "commands": {
+        "run" : "run"
+    },
+    "frameworks" : {
+        "aspnet50" : { }
+    }
+}

@@ -23,13 +23,6 @@ namespace Microsoft.Framework.Signing
 
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.HelpOption("-h|--help");
-            app.Command("timestamp", timestamp =>
-            {
-                timestamp.Description = "Timestamp a signature using a trusted timestamping authority";
-                var fileName = timestamp.Argument("filename", "the name of the file to timestamp");
-                var authority = timestamp.Argument("authority", "the url of the trusted timestamping authority to use");
-                timestamp.OnExecute(() => Timestamp(fileName.Value, authority.Value));
-            }, addHelpCommand: false);
             app.Command("extractcontent", extractContent =>
             {
                 extractContent.Description = "Extracts the content of a CMS-formatted signature into the specified file";
