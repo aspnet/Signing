@@ -7,8 +7,10 @@ namespace Microsoft.Framework.Asn1
     {
         public IEnumerable<Asn1Value> Values { get; }
 
-        public Asn1Sequence(Asn1Class @class, int tag, int length, Asn1Encoding encoding, IEnumerable<Asn1Value> values)
-            : base(@class, tag, length, encoding)
+        public Asn1Sequence(IEnumerable<Asn1Value> values) : this(Asn1Class.Universal, Asn1Constants.Tags.Sequence, values) { }
+
+        public Asn1Sequence(Asn1Class @class, int tag, IEnumerable<Asn1Value> values)
+            : base(@class, tag)
         {
             Values = values;
         }

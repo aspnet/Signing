@@ -18,7 +18,7 @@
         {
         }
 
-        public virtual void Visit(Asn1Tagged value)
+        public virtual void Visit(Asn1ExplicitTag value)
         {
         }
     }

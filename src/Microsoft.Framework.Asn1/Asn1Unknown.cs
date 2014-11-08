@@ -6,8 +6,8 @@ namespace Microsoft.Framework.Asn1
     {
         public byte[] Content { get; }
 
-        public Asn1Unknown(Asn1Class @class, int tag, int length, Asn1Encoding encoding, byte[] content)
-            : base(@class, tag, length, encoding)
+        public Asn1Unknown(Asn1Class @class, int tag, byte[] content)
+            : base(@class, tag)
         {
             Content = content;
         }

@@ -1,18 +1,19 @@
 ﻿{
-  "version": "1.0.0-*",
-  "dependencies": {
-    "Xunit.KRunner": "1.0.0-beta1",
-    "Microsoft.Framework.Signing": ""
-  },
-  "commands": {
-    "test": "Xunit.KRunner"
-  },
-  "frameworks": {
-    "aspnet50": {
-      "frameworkAssemblies": {
-        "System.Security": "",
-        "System.IO.Compression": ""
-      }
+    "version": "1.0.0-*",
+    "dependencies": {
+        "Xunit.KRunner": "1.0.0-beta1",
+        "Microsoft.Framework.Signing": "",
+        "System.IO.FileSystem": "4.0.0-*",
+        "System.IO.Compression": "4.0.0-*"
+    },
+    "commands": {
+        "test": "Xunit.KRunner"
+    },
+    "frameworks": {
+        "aspnet50": {
+            "frameworkAssemblies": {
+                "System.Security": ""
+            }
+        }
     }
-  }
 }

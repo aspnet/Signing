@@ -47,7 +47,7 @@ namespace Microsoft.Framework.Asn1
             _output.WriteLine(line);
         }
 
-        public override void Visit(Asn1Tagged value)
+        public override void Visit(Asn1ExplicitTag value)
         {
             StringBuilder line = new StringBuilder();
             BuildCommonPrefix(value, line);
@@ -72,23 +72,7 @@ namespace Microsoft.Framework.Asn1
             line.Append(":");
             line.Append(value.Tag.ToString("00"));
             line.Append(") ");
-            if (value.Encoding == Asn1Encoding.PrimativeDefiniteLength || value.Encoding == Asn1Encoding.ConstructedDefiniteLength)
-            {
-                line.Append("l = " + value.Length.ToString("0000"));
-            }
-            else
-            {
-                line.Append("l = ????");
-            }
             line.Append(" ");
-            if (value.Encoding == Asn1Encoding.PrimativeDefiniteLength)
-            {
-                line.Append("prim");
-            }
-            else
-            {
-                line.Append("cons");
-            }
             line.Append(new string(' ', _depth + 1));
         }
     }

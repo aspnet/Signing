@@ -6,15 +6,11 @@ namespace Microsoft.Framework.Asn1
     {
         public Asn1Class Class { get; }
         public int Tag { get; }
-        public int Length { get; }
-        public Asn1Encoding Encoding { get; }
-
-        protected Asn1Value(Asn1Class @class, int tag, int length, Asn1Encoding encoding)
+        
+        protected Asn1Value(Asn1Class @class, int tag)
         {
             Class = @class;
             Tag = tag;
-            Length = length;
-            Encoding = encoding;
         }
 
         public virtual void Accept(Asn1Visitor visitor)

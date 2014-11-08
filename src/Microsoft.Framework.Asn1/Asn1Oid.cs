@@ -1,13 +1,13 @@
-﻿using System.Security.Cryptography;
-
-namespace Microsoft.Framework.Asn1
+﻿namespace Microsoft.Framework.Asn1
 {
     public class Asn1Oid : Asn1Value
     {
         public string Oid { get; }
 
-        public Asn1Oid(Asn1Class @class, int tag, int length, Asn1Encoding encoding, string oid)
-            : base(@class, tag, length, encoding)
+        public Asn1Oid(string oid) : this(Asn1Class.Universal, Asn1Constants.Tags.ObjectIdentifier, oid) { }
+
+        public Asn1Oid(Asn1Class @class, int tag, string oid)
+            : base(@class, tag)
         {
             Oid = oid;
         }

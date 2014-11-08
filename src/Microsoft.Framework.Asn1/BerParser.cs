@@ -2,12 +2,19 @@
 using System.Linq;
 using System.IO;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 
 namespace Microsoft.Framework.Asn1
 {
+    using Subparser = Func<BerParser, BerHeader, BinaryReader, Asn1Value>;
+
     public class BerParser
     {
+
+        private static readonly Dictionary<int, Subparser> _parsers = new Dictionary<int, Subparser>()
+        {
+            { Asn1Constants.Tags.Sequence, (p, h, r) => p.ParseSequence(h, r) },
+            { Asn1Constants.Tags.ObjectIdentifier, (p, h, r) => p.ParseOid(h, r) }
+        };
 
         public virtual Asn1Value Parse(Stream input)
         {
@@ -25,23 +32,19 @@ namespace Microsoft.Framework.Asn1
             if (header.Class == Asn1Class.ContextSpecific)
             {
                 var inner = ReadValue(reader);
-                return new Asn1Tagged(
-                    header.Class,
+                return new Asn1ExplicitTag(
                     header.Tag,
-                    header.Length,
-                    header.Encoding,
                     inner);
             }
 
-            switch (header.Tag)
+            Subparser subparser;
+            if (_parsers.TryGetValue(header.Tag, out subparser))
             {
-                case 0x10:
-                    return ParseSequence(header, reader);
-                case 0x06:
-                    return ParseOid(header, reader);
-                default:
-                    return ParseUnknown(header, reader);
+                return subparser(this, header, reader);
             }
+
+            // Unknown tag, but we do have enough to read this node and move on, so do that.
+            return ParseUnknown(header, reader);
         }
 
         private Asn1Oid ParseOid(BerHeader header, BinaryReader reader)
@@ -72,9 +75,7 @@ namespace Microsoft.Framework.Asn1
             return new Asn1Oid(
                 header.Class,
                 header.Tag,
-                header.Length,
-                header.Encoding,
-                String.Join(".", segments.Select(i => i.ToString())));
+                string.Join(".", segments.Select(i => i.ToString())));
         }
 
         private Asn1Sequence ParseSequence(BerHeader header, BinaryReader reader)
@@ -88,8 +89,6 @@ namespace Microsoft.Framework.Asn1
             return new Asn1Sequence(
                 header.Class,
                 header.Tag,
-                header.Length,
-                header.Encoding,
                 values);
         }
 
@@ -102,12 +101,10 @@ namespace Microsoft.Framework.Asn1
             return new Asn1Unknown(
                 header.Class,
                 header.Tag,
-                header.Length,
-                header.Encoding,
                 content);
         }
 
-        private static BerHeader ReadHeader(BinaryReader reader)
+        internal static BerHeader ReadHeader(BinaryReader reader)
         {
             byte lowTag = reader.ReadByte();
             byte classNumber = (byte)((lowTag & 0xC0) >> 6); // Extract top 2 bits and shift down
@@ -139,21 +136,21 @@ namespace Microsoft.Framework.Asn1
                         Asn1Encoding.ConstructedIndefiniteLength :
                         Asn1Encoding.ConstructedDefiniteLength));
         }
+    }
 
-        private struct BerHeader
+    internal struct BerHeader
+    {
+        public Asn1Class Class { get; }
+        public Asn1Encoding Encoding { get; }
+        public int Tag { get; }
+        public int Length { get; }
+
+        public BerHeader(Asn1Class @class, int tag, int length, Asn1Encoding encoding) : this()
         {
-            public Asn1Class Class;
-            public Asn1Encoding Encoding;
-            public int Tag;
-            public int Length;
-            
-            public BerHeader(Asn1Class @class, int tag, int length, Asn1Encoding encoding) : this()
-            {
-                Class = @class;
-                Tag = tag;
-                Encoding = encoding;
-                Length = length;
-            }
+            Class = @class;
+            Tag = tag;
+            Encoding = encoding;
+            Length = length;
         }
     }
 }

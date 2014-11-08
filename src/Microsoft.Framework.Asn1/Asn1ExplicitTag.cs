@@ -2,12 +2,12 @@
 
 namespace Microsoft.Framework.Asn1
 {
-    public class Asn1Tagged : Asn1Value
+    public class Asn1ExplicitTag : Asn1Value
     {
         public Asn1Value Value { get; }
 
-        public Asn1Tagged(Asn1Class @class, int tag, int length, Asn1Encoding encoding, Asn1Value value)
-            : base(@class, tag, length, encoding)
+        public Asn1ExplicitTag(int tag, Asn1Value value)
+            : base(Asn1Class.ContextSpecific, tag)
         {
             Value = value;
         }
