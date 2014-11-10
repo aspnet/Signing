@@ -197,6 +197,35 @@ namespace Microsoft.Framework.Asn1.Test
             Assert.Same(Asn1Null.Instance, actual); // We should even get the same instance!
         }
 
+        [Fact]
+        public void ParseCanParsePrimitiveOctetStrings()
+        {
+            // Arrange
+            var expected = new Asn1OctetString(new byte[] { 0x01, 0x02, 0x03 });
+            var data = PrependHeader(expected.Value, Asn1Constants.Tags.OctetString);
+
+            // Act
+            var actual = ParseValue(data);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [InlineData(new byte[] { 0x39, 0x31, 0x30, 0x35, 0x30, 0x36, 0x32, 0x33, 0x34, 0x35, 0x34, 0x30, 0x5a }, "1991-05-06T23:45:40Z")]
+        public void ParseCanParseUTCTimes(byte[] data, string dateTimeOffset)
+        {
+            // Arrange
+            data = PrependHeader(data, Asn1Constants.Tags.UTCTime);
+            var expected = new Asn1UtcTime(DateTimeOffset.Parse(dateTimeOffset));
+
+            // Act
+            var actual = ParseValue(data);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
         private static byte[] PrependHeader(byte[] data, int tag)
         {
             return Enumerable.Concat(

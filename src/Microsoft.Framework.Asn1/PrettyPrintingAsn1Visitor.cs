@@ -88,6 +88,22 @@ namespace Microsoft.Framework.Asn1
             _output.WriteLine(line);
         }
 
+        public override void Visit(Asn1OctetString value)
+        {
+            StringBuilder line = new StringBuilder();
+            BuildCommonPrefix(value, line);
+            line.Append("OCTET STRING\t" + value.Value.Length.ToString() + " bytes long");
+            _output.WriteLine(line);
+        }
+
+        public override void Visit(Asn1UtcTime value)
+        {
+            StringBuilder line = new StringBuilder();
+            BuildCommonPrefix(value, line);
+            line.Append("UTCTime\t" + value.Value.ToString("O"));
+            _output.WriteLine(line);
+        }
+
         public override void Visit(Asn1Unknown value)
         {
             StringBuilder line = new StringBuilder();

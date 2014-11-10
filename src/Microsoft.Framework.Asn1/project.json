@@ -8,6 +8,7 @@
         "System.Console": "4.0.0-*",
         "System.Threading.Tasks": "4.0.0-*",
         "System.Linq": "4.0.0-*",
+        "System.Globalization": "4.0.10-*",
         "System.Security.Cryptography": "4.0.0.0"
     },
     "commands": {

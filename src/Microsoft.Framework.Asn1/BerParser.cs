@@ -6,6 +6,7 @@ using System.Text;
 
 namespace Microsoft.Framework.Asn1
 {
+    using System.Globalization;
     using Subparser = Func<BerParser, BerHeader, Asn1Value>;
 
     public class BerParser
@@ -18,6 +19,8 @@ namespace Microsoft.Framework.Asn1
             { Asn1Constants.Tags.Set, (p, h) => p.ParseSequenceOrSet(h, isSet: true) },
             { Asn1Constants.Tags.ObjectIdentifier, (p, h) => p.ParseOid(h) },
             { Asn1Constants.Tags.Integer, (p, h) => p.ParseInteger(h) },
+            { Asn1Constants.Tags.OctetString, (p, h) => p.ParseOctetString(h) },
+            { Asn1Constants.Tags.UTCTime, (p, h) => p.ParseUtcTime(h) },
             { Asn1Constants.Tags.Null, (p, h) => p.ParseNull(h) }
         };
 
@@ -90,6 +93,12 @@ namespace Microsoft.Framework.Asn1
                 segments);
         }
 
+        private Asn1OctetString ParseOctetString(BerHeader header)
+        {
+            var data = _reader.ReadBytes(header.Length);
+            return new Asn1OctetString(data);
+        }
+
         private Asn1Integer ParseInteger(BerHeader header)
         {
             var data = _reader.ReadBytes(header.Length);
@@ -118,6 +127,17 @@ namespace Microsoft.Framework.Asn1
                 _reader.BaseStream.Seek(header.Length, SeekOrigin.Current);
             }
             return Asn1Null.Instance;
+        }
+
+        private Asn1UtcTime ParseUtcTime(BerHeader header)
+        {
+            var data = _reader.ReadBytes(header.Length);
+            var str = Encoding.ASCII.GetString(data);
+
+            // Try to parse a long-form date/time string
+            var val = DateTimeOffset.ParseExact(str, new string[] { "yyMMddHHmmssK", "yyMMddHHmmK" }, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces);
+
+            return new Asn1UtcTime(val);
         }
 
         private Asn1Value ParseUnknown(BerHeader header)

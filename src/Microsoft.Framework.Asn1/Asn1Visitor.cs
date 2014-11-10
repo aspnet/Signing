@@ -35,6 +35,14 @@ namespace Microsoft.Framework.Asn1
         {
         }
 
+        public virtual void Visit(Asn1OctetString value)
+        {
+        }
+
+        public virtual void Visit(Asn1UtcTime value)
+        {
+        }
+
         public virtual void Visit(Asn1Set value)
         {
             Visit((Asn1SequenceBase)value);
