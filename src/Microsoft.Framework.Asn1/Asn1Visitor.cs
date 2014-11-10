@@ -43,6 +43,10 @@ namespace Microsoft.Framework.Asn1
         {
         }
 
+        public virtual void Visit(Asn1String value)
+        {
+        }
+
         public virtual void Visit(Asn1Set value)
         {
             Visit((Asn1SequenceBase)value);

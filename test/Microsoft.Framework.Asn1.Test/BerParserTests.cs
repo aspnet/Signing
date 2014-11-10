@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text;
 using Xunit;
 
 namespace Microsoft.Framework.Asn1.Test
@@ -216,8 +217,24 @@ namespace Microsoft.Framework.Asn1.Test
         public void ParseCanParseUTCTimes(byte[] data, string dateTimeOffset)
         {
             // Arrange
-            data = PrependHeader(data, Asn1Constants.Tags.UTCTime);
+            data = PrependHeader(data, Asn1Constants.Tags.UtcTime);
             var expected = new Asn1UtcTime(DateTimeOffset.Parse(dateTimeOffset));
+
+            // Act
+            var actual = ParseValue(data);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [InlineData(new byte[] { 0x00, 0x48, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 0x6F, 0x00, 0x2C, 0x00, 0x20, 0x00, 0x57, 0x00, 0x6F, 0x00, 0x72, 0x00, 0x6C, 0x00, 0x64, 0x00, 0x21 }, "Hello, World!", Asn1StringType.BmpString, 0x1E /* BmpString */)]
+        [InlineData(new byte[] { 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x2C, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64, 0x21 }, "Hello, World!", Asn1StringType.UTF8String, 0x0C /* UTF8String */)]
+        public void ParseCanParseStrings(byte[] data, string str, Asn1StringType type, int tag)
+        {
+            // Arrange
+            data = PrependHeader(data, tag);
+            var expected = new Asn1String(str, type);
 
             // Act
             var actual = ParseValue(data);

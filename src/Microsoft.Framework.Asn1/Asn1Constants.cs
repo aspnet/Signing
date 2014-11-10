@@ -14,7 +14,9 @@
             public static readonly int PrintableString = 0x13;
             public static readonly int T61String = 0x14;
             public static readonly int IA5String = 0x16;
-            public static readonly int UTCTime = 0x17;
+            public static readonly int UtcTime = 0x17;
+            public static readonly int BmpString = 0x1E;
+            public static readonly int UTF8String = 0x0C;
         }
     }
 }

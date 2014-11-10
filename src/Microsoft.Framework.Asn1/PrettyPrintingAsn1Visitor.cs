@@ -104,6 +104,14 @@ namespace Microsoft.Framework.Asn1
             _output.WriteLine(line);
         }
 
+        public override void Visit(Asn1String value)
+        {
+            StringBuilder line = new StringBuilder();
+            BuildCommonPrefix(value, line);
+            line.Append(value.Type.ToString() + "\t" + value.Value);
+            _output.WriteLine(line);
+        }
+
         public override void Visit(Asn1Unknown value)
         {
             StringBuilder line = new StringBuilder();

@@ -20,8 +20,15 @@ namespace Microsoft.Framework.Asn1
             { Asn1Constants.Tags.ObjectIdentifier, (p, h) => p.ParseOid(h) },
             { Asn1Constants.Tags.Integer, (p, h) => p.ParseInteger(h) },
             { Asn1Constants.Tags.OctetString, (p, h) => p.ParseOctetString(h) },
-            { Asn1Constants.Tags.UTCTime, (p, h) => p.ParseUtcTime(h) },
+            { Asn1Constants.Tags.UtcTime, (p, h) => p.ParseUtcTime(h) },
+            { Asn1Constants.Tags.BmpString, (p, h) => p.ParseString(h, Asn1StringType.BmpString) },
+            { Asn1Constants.Tags.UTF8String, (p, h) => p.ParseString(h, Asn1StringType.UTF8String) },
             { Asn1Constants.Tags.Null, (p, h) => p.ParseNull(h) }
+        };
+
+        private static readonly Dictionary<Asn1StringType, Func<byte[], string>> _decoders = new Dictionary<Asn1StringType, Func<byte[], string>>() {
+            { Asn1StringType.BmpString, DecodeBmpString },
+            { Asn1StringType.UTF8String, bytes => Encoding.UTF8.GetString(bytes) }
         };
 
         public BerParser(byte[] input)
@@ -60,6 +67,12 @@ namespace Microsoft.Framework.Asn1
 
             // Unknown tag, but we do have enough to read this node and move on, so do that.
             return ParseUnknown(header);
+        }
+
+        private Asn1String ParseString(BerHeader header, Asn1StringType type)
+        {
+            var data = _reader.ReadBytes(header.Length);
+            return new Asn1String(_decoders[type](data), type);
         }
 
         private Asn1Oid ParseOid(BerHeader header)
@@ -150,6 +163,18 @@ namespace Microsoft.Framework.Asn1
                 header.Class,
                 header.Tag,
                 content);
+        }
+
+        private static string DecodeBmpString(byte[] data)
+        {
+            // We have to swap all the pairs of bytes
+            for (int i = 0; i < data.Length; i+=2)
+            {
+                var temp = data[i + 1];
+                data[i + 1] = data[i];
+                data[i] = temp;
+            }
+            return Encoding.Unicode.GetString(data);
         }
 
         internal BerHeader ReadHeader()

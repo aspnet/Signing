@@ -7,7 +7,7 @@ namespace Microsoft.Framework.Asn1
         public DateTimeOffset Value { get; }
 
         public Asn1UtcTime(DateTimeOffset value)
-            : this(Asn1Class.Universal, Asn1Constants.Tags.UTCTime, value)
+            : this(Asn1Class.Universal, Asn1Constants.Tags.UtcTime, value)
         {
         }
 
