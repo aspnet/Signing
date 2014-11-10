@@ -2,12 +2,17 @@
 
 namespace Microsoft.Framework.Asn1
 {
-    public class Asn1ExplicitTag : Asn1Value
+    public class Asn1Integer : Asn1Value
     {
-        public Asn1Value Value { get; }
+        public long Value { get; }
 
-        public Asn1ExplicitTag(int tag, Asn1Value value)
-            : base(Asn1Class.ContextSpecific, tag)
+        public Asn1Integer(long value)
+            : this(Asn1Class.ContextSpecific, Asn1Constants.Tags.Integer, value)
+        {
+        }
+
+        public Asn1Integer(Asn1Class @class, int tag, long value)
+            : base(@class, tag)
         {
             Value = value;
         }
@@ -19,7 +24,7 @@ namespace Microsoft.Framework.Asn1
 
         public override bool Equals(object obj)
         {
-            Asn1ExplicitTag other = obj as Asn1ExplicitTag;
+            Asn1Integer other = obj as Asn1Integer;
             return other != null &&
                 base.Equals(other) &&
                 Value.Equals(other.Value);
@@ -32,7 +37,7 @@ namespace Microsoft.Framework.Asn1
 
         public override string ToString()
         {
-            return "[" + Tag + "] " + Value.ToString();
+            return "INTEGER " + Value.ToString();
         }
     }
 }

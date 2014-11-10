@@ -1,6 +1,6 @@
 ﻿namespace Microsoft.Framework.Asn1
 {
-    internal static class Asn1Constants
+    public static class Asn1Constants
     {
         public static class Tags
         {

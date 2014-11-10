@@ -16,5 +16,10 @@ namespace Microsoft.Framework.Asn1
         {
             visitor.Visit(this);
         }
+
+        public override string ToString()
+        {
+            return "UNKNOWN";
+        }
     }
 }

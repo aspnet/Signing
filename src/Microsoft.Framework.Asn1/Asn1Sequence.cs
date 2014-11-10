@@ -8,6 +8,7 @@ namespace Microsoft.Framework.Asn1
     {
         public IEnumerable<Asn1Value> Values { get; }
 
+        public Asn1Sequence(params Asn1Value[] values) : this(Asn1Class.Universal, Asn1Constants.Tags.Sequence, values) { }
         public Asn1Sequence(IEnumerable<Asn1Value> values) : this(Asn1Class.Universal, Asn1Constants.Tags.Sequence, values) { }
 
         public Asn1Sequence(Asn1Class @class, int tag, IEnumerable<Asn1Value> values)
@@ -34,6 +35,11 @@ namespace Microsoft.Framework.Asn1
             return HashCodeCombiner.Start()
                 .Add(base.GetHashCode())
                 .Add(Values);
+        }
+
+        public override string ToString()
+        {
+            return "SEQUENCE {" + String.Join(";", Values.Select(v => v.ToString())) + "}";
         }
     }
 }

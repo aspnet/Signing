@@ -119,9 +119,9 @@ namespace Microsoft.Framework.Asn1
             byte classNumber = (byte)((lowTag & 0xC0) >> 6); // Extract top 2 bits and shift down
             bool primitive = ((lowTag & 0x20) == 0);
             int tag = lowTag & 0x1F; // Extract bottom 5 bits
-            if (tag == 0x3F)
+            if (tag == 0x1F)
             {
-                throw new NotImplementedException("Multi-octet tag!");
+                tag = ReadBase128VarInt();
             }
 
             // Read the length
@@ -144,6 +144,18 @@ namespace Microsoft.Framework.Asn1
                     (len == 0 ?
                         Asn1Encoding.ConstructedIndefiniteLength :
                         Asn1Encoding.ConstructedDefiniteLength));
+        }
+
+        private int ReadBase128VarInt()
+        {
+            int val = 0;
+            byte cur;
+            do
+            {
+                cur = _reader.ReadByte();
+                val = (val * 128) + (cur & 0x7F);
+            } while ((cur & 0x80) != 0);
+            return val;
         }
     }
 

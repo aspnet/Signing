@@ -49,5 +49,10 @@ namespace Microsoft.Framework.Asn1
         {
             return oid.Split('.').Select(p => Int32.Parse(p));
         }
+
+        public override string ToString()
+        {
+            return "OID " + _str;
+        }
     }
 }
