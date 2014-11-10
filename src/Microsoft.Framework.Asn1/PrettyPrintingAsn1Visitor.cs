@@ -32,12 +32,31 @@ namespace Microsoft.Framework.Asn1
             VisitSubValues(value.Values);
         }
 
+        public override void Visit(Asn1Set value)
+        {
+            StringBuilder line = new StringBuilder();
+            BuildCommonPrefix(value, line);
+            line.Append("SET");
+            _output.WriteLine(line);
+
+            VisitSubValues(value.Values);
+        }
+
         public override void Visit(Asn1Oid value)
         {
             StringBuilder line = new StringBuilder();
             BuildCommonPrefix(value, line);
 
             line.Append("OID\t" + FormatOid(value));
+            _output.WriteLine(line);
+        }
+
+        public override void Visit(Asn1Integer value)
+        {
+            StringBuilder line = new StringBuilder();
+            BuildCommonPrefix(value, line);
+
+            line.Append("INTEGER\t" + value.Value.ToString());
             _output.WriteLine(line);
         }
 
@@ -66,7 +85,7 @@ namespace Microsoft.Framework.Asn1
         {
             StringBuilder line = new StringBuilder();
             BuildCommonPrefix(value, line);
-            line.Append("TAGGED");
+            line.Append("TAGGED [" + value.Tag + "]");
             _output.WriteLine(line);
 
             VisitSubValue(value.Value);

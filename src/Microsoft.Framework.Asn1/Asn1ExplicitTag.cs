@@ -32,7 +32,7 @@ namespace Microsoft.Framework.Asn1
 
         public override string ToString()
         {
-            return "[" + Tag + "] " + Value.ToString();
+            return base.ToString() + " " + Value.ToString();
         }
     }
 }

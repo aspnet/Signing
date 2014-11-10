@@ -52,7 +52,7 @@ namespace Microsoft.Framework.Asn1
 
         public override string ToString()
         {
-            return "OID " + _str;
+            return base.ToString() + " OID " + _str;
         }
     }
 }

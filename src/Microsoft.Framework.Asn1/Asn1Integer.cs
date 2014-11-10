@@ -7,7 +7,7 @@ namespace Microsoft.Framework.Asn1
         public long Value { get; }
 
         public Asn1Integer(long value)
-            : this(Asn1Class.ContextSpecific, Asn1Constants.Tags.Integer, value)
+            : this(Asn1Class.Universal, Asn1Constants.Tags.Integer, value)
         {
         }
 
@@ -37,7 +37,7 @@ namespace Microsoft.Framework.Asn1
 
         public override string ToString()
         {
-            return "INTEGER " + Value.ToString();
+            return base.ToString() + " INTEGER " + Value.ToString();
         }
     }
 }

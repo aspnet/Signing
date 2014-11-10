@@ -111,6 +111,33 @@ namespace Microsoft.Framework.Asn1.Test
         }
 
         [Fact]
+        public void ParserCanParseSet()
+        {
+            // Arrange
+            // [(depth).(index)]
+            var data = new byte[] {
+                0x11, // [0.0] Class: Universal, Tag: Set
+                0x07,  // [0.0] Length of concatenated BER encodings
+                0x06, // [1.0] Class: Universal, Tag: OID
+                0x01, // [1.0] Length: 1 octet
+                0x2A, // [1.0] Value: 1.2
+                0x06, // [1.1] Class: Universal, Tag: OID
+                0x02, // [1.1] Length: 2 octets
+                0x2B, // [1.1]
+                0x06  // [1.1] Value: 1.3.6
+            };
+            var expected = new Asn1Set(
+                new Asn1Oid(1, 2),
+                new Asn1Oid(1, 3, 6));
+
+            // Act
+            var actual = ParseValue(data);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
         public void ParserCanParseExplicitlyTaggedValue()
         {
             // Arrange
@@ -156,11 +183,11 @@ namespace Microsoft.Framework.Asn1.Test
         private static byte[] PrependHeader(byte[] data, int tag)
         {
             return Enumerable.Concat(
-                            new byte[] {
+                new byte[] {
                     (byte)tag,
                     (byte)data.Length
-                            },
-                            data).ToArray();
+                },
+                data).ToArray();
         }
 
         private Asn1Value ParseValue(byte[] data)

@@ -30,5 +30,10 @@ namespace Microsoft.Framework.Asn1
         {
             return HashCodeCombiner.Start().Add(Class).Add(Tag);
         }
+
+        public override string ToString()
+        {
+            return "[" + Class.ToString() + ":" + Tag.ToString() + "]";
+        }
     }
 }

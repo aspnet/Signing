@@ -14,8 +14,10 @@ namespace Microsoft.Framework.Asn1
 
         private static readonly Dictionary<int, Subparser> _parsers = new Dictionary<int, Subparser>()
         {
-            { Asn1Constants.Tags.Sequence, (p, h) => p.ParseSequence(h) },
-            { Asn1Constants.Tags.ObjectIdentifier, (p, h) => p.ParseOid(h) }
+            { Asn1Constants.Tags.Sequence, (p, h) => p.ParseSequenceOrSet(h, isSet: false) },
+            { Asn1Constants.Tags.Set, (p, h) => p.ParseSequenceOrSet(h, isSet: true) },
+            { Asn1Constants.Tags.ObjectIdentifier, (p, h) => p.ParseOid(h) },
+            { Asn1Constants.Tags.Integer, (p, h) => p.ParseInteger(h) }
         };
 
         public BerParser(byte[] input)
@@ -87,7 +89,16 @@ namespace Microsoft.Framework.Asn1
                 segments);
         }
 
-        private Asn1Sequence ParseSequence(BerHeader header)
+        private Asn1Integer ParseInteger(BerHeader header)
+        {
+            var data = _reader.ReadBytes(header.Length);
+            return new Asn1Integer(
+                header.Class,
+                header.Tag,
+                data.Skip(1).Aggregate((int)(sbyte)data[0], (l, r) => l * 256 + r));
+        }
+
+        private Asn1SequenceBase ParseSequenceOrSet(BerHeader header, bool isSet)
         {
             long start = _reader.BaseStream.Position;
             List<Asn1Value> values = new List<Asn1Value>();
@@ -95,10 +106,7 @@ namespace Microsoft.Framework.Asn1
             {
                 values.Add(ReadValue());
             }
-            return new Asn1Sequence(
-                header.Class,
-                header.Tag,
-                values);
+            return Asn1SequenceBase.Create(header.Class, header.Tag, values, isSet);
         }
 
         private Asn1Value ParseUnknown(BerHeader header)
