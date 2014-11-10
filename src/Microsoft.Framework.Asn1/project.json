@@ -12,6 +12,7 @@
     "commands": {
         "run": "run"
     },
+
     "frameworks": {
         "net45": { },
         "aspnet50": { },
