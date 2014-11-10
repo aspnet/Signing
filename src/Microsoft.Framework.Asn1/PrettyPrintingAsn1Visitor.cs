@@ -8,6 +8,7 @@ namespace Microsoft.Framework.Asn1
     {
         private TextWriter _output;
         private bool _ansi;
+        private int? _explicitTag = null;
 
         public PrettyPrintingAsn1Visitor(TextWriter output, bool ansi)
         {
@@ -22,21 +23,11 @@ namespace Microsoft.Framework.Asn1
             _output.WriteLine(line);
         }
 
-        public override void Visit(Asn1Sequence value)
+        public override void Visit(Asn1SequenceBase value)
         {
             StringBuilder line = new StringBuilder();
             BuildCommonPrefix(value, line);
-            line.Append("SEQUENCE");
-            _output.WriteLine(line);
-
-            VisitSubValues(value.Values);
-        }
-
-        public override void Visit(Asn1Set value)
-        {
-            StringBuilder line = new StringBuilder();
-            BuildCommonPrefix(value, line);
-            line.Append("SET");
+            line.Append(value.IsSet ? "SET" : "SEQUENCE");
             _output.WriteLine(line);
 
             VisitSubValues(value.Values);
@@ -83,12 +74,18 @@ namespace Microsoft.Framework.Asn1
 
         public override void Visit(Asn1ExplicitTag value)
         {
+            var oldTag = _explicitTag;
+            _explicitTag = value.Tag;
+            value.Value.Accept(this);
+            _explicitTag = oldTag;
+        }
+
+        public override void Visit(Asn1Null value)
+        {
             StringBuilder line = new StringBuilder();
             BuildCommonPrefix(value, line);
-            line.Append("TAGGED [" + value.Tag + "]");
+            line.Append("NULL");
             _output.WriteLine(line);
-
-            VisitSubValue(value.Value);
         }
 
         public override void Visit(Asn1Unknown value)
@@ -101,15 +98,24 @@ namespace Microsoft.Framework.Asn1
 
         private void BuildCommonPrefix(Asn1Value value, StringBuilder line)
         {
-            line.Append("  [" + Depth + "]");
+            line.Append("  [" + Depth.ToString("00") + "]");
             line.Append(" (");
-            line.Append(value.Class.ToString().PadLeft(15, ' '));
+
+            // The longest possible string is 'Application', 11 chars long
+            //  ContextSpecific is never written here because Explicit Tag nodes don't get their own line.
+            line.Append(value.Class.ToString().PadLeft(11, ' ')); 
+
             line.Append(":");
             line.Append(value.Tag.ToString("00"));
             line.Append(") ");
             line.Append(" ");
             line.Append(new string(' ', (Depth + 1)));
             line.Append(" ");
+            if (_explicitTag.HasValue)
+            {
+                line.Append("[" + _explicitTag.Value + "] ");
+                _explicitTag = null;
+            }
         }
     }
 }

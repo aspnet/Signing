@@ -16,6 +16,7 @@ namespace Microsoft.Framework.Asn1
 
         public virtual void Visit(Asn1Sequence value)
         {
+            Visit((Asn1SequenceBase)value);
         }
 
         public virtual void Visit(Asn1Oid value)
@@ -30,7 +31,16 @@ namespace Microsoft.Framework.Asn1
         {
         }
 
+        public virtual void Visit(Asn1Null value)
+        {
+        }
+
         public virtual void Visit(Asn1Set value)
+        {
+            Visit((Asn1SequenceBase)value);
+        }
+
+        public virtual void Visit(Asn1SequenceBase value)
         {
         }
 

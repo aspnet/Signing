@@ -19,7 +19,7 @@ namespace Microsoft.Framework.Asn1
 
         public override string ToString()
         {
-            return "UNKNOWN";
+            return base.ToString() + " UNKNOWN";
         }
     }
 }

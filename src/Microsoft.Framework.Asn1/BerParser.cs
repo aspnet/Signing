@@ -17,7 +17,8 @@ namespace Microsoft.Framework.Asn1
             { Asn1Constants.Tags.Sequence, (p, h) => p.ParseSequenceOrSet(h, isSet: false) },
             { Asn1Constants.Tags.Set, (p, h) => p.ParseSequenceOrSet(h, isSet: true) },
             { Asn1Constants.Tags.ObjectIdentifier, (p, h) => p.ParseOid(h) },
-            { Asn1Constants.Tags.Integer, (p, h) => p.ParseInteger(h) }
+            { Asn1Constants.Tags.Integer, (p, h) => p.ParseInteger(h) },
+            { Asn1Constants.Tags.Null, (p, h) => p.ParseNull(h) }
         };
 
         public BerParser(byte[] input)
@@ -107,6 +108,16 @@ namespace Microsoft.Framework.Asn1
                 values.Add(ReadValue());
             }
             return Asn1SequenceBase.Create(header.Class, header.Tag, values, isSet);
+        }
+
+        private Asn1Null ParseNull(BerHeader header)
+        {
+            // Advance past Length bytes, but ignore them
+            if (header.Length > 0)
+            {
+                _reader.BaseStream.Seek(header.Length, SeekOrigin.Current);
+            }
+            return Asn1Null.Instance;
         }
 
         private Asn1Value ParseUnknown(BerHeader header)

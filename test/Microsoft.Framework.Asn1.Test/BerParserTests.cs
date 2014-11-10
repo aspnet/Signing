@@ -180,6 +180,23 @@ namespace Microsoft.Framework.Asn1.Test
             Assert.Equal(expected, actual);
         }
 
+        [Theory]
+        [InlineData(new byte[] { 0x05, 0x00 })]
+        [InlineData(new byte[] { 0x05, 0x81, 0x00 })]
+        [InlineData(new byte[] { 0x05, 0x82, 0x00, 0x00 })]
+        public void ParseCanParseNulls(byte[] data)
+        {
+            // Arrange
+            // This time, we put the header in the input data because the length octets are the only thing that varies anyway :)
+
+            // Act
+            var actual = ParseValue(data);
+
+            // Assert
+            Assert.Equal(Asn1Null.Instance, actual);
+            Assert.Same(Asn1Null.Instance, actual); // We should even get the same instance!
+        }
+
         private static byte[] PrependHeader(byte[] data, int tag)
         {
             return Enumerable.Concat(

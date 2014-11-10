@@ -53,6 +53,11 @@ namespace Microsoft.Framework.Asn1
 
         public Asn1Sequence(Asn1Class @class, int tag, IEnumerable<Asn1Value> values)
             : base(@class, tag, values, isSet: false) { }
+
+        public override void Accept(Asn1Visitor visitor)
+        {
+            visitor.Visit(this);
+        }
     }
 
     public class Asn1Set : Asn1SequenceBase
@@ -64,5 +69,10 @@ namespace Microsoft.Framework.Asn1
 
         public Asn1Set(Asn1Class @class, int tag, IEnumerable<Asn1Value> values)
             : base(@class, tag, values, isSet: true) { }
+
+        public override void Accept(Asn1Visitor visitor)
+        {
+            visitor.Visit(this);
+        }
     }
 }
