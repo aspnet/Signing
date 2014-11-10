@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Microsoft.Framework.Asn1
 {
@@ -18,6 +19,21 @@ namespace Microsoft.Framework.Asn1
         public override void Accept(Asn1Visitor visitor)
         {
             visitor.Visit(this);
+        }
+
+        public override bool Equals(object obj)
+        {
+            Asn1Sequence other = obj as Asn1Sequence;
+            return other != null &&
+                base.Equals(other) &&
+                Values.SequenceEqual(other.Values);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCodeCombiner.Start()
+                .Add(base.GetHashCode())
+                .Add(Values);
         }
     }
 }

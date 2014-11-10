@@ -2,36 +2,45 @@
 using System.Linq;
 using System.IO;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Microsoft.Framework.Asn1
 {
-    using Subparser = Func<BerParser, BerHeader, BinaryReader, Asn1Value>;
+    using Subparser = Func<BerParser, BerHeader, Asn1Value>;
 
     public class BerParser
     {
+        private BinaryReader _reader;
 
         private static readonly Dictionary<int, Subparser> _parsers = new Dictionary<int, Subparser>()
         {
-            { Asn1Constants.Tags.Sequence, (p, h, r) => p.ParseSequence(h, r) },
-            { Asn1Constants.Tags.ObjectIdentifier, (p, h, r) => p.ParseOid(h, r) }
+            { Asn1Constants.Tags.Sequence, (p, h) => p.ParseSequence(h) },
+            { Asn1Constants.Tags.ObjectIdentifier, (p, h) => p.ParseOid(h) }
         };
 
-        public virtual Asn1Value Parse(Stream input)
+        public BerParser(byte[] input)
+            : this(new MemoryStream(input))
         {
-            using (var reader = new BinaryReader(input))
-            {
-                return ReadValue(reader);
-            }
         }
 
-        private Asn1Value ReadValue(BinaryReader reader)
+        public BerParser(Stream input)
+            : this(new BinaryReader(input, Encoding.UTF8, leaveOpen: false))
+        {
+        }
+
+        public BerParser(BinaryReader reader)
+        {
+            _reader = reader;
+        }
+
+        public virtual Asn1Value ReadValue()
         {
             // Read the tag
-            var header = ReadHeader(reader);
+            var header = ReadHeader();
 
             if (header.Class == Asn1Class.ContextSpecific)
             {
-                var inner = ReadValue(reader);
+                var inner = ReadValue();
                 return new Asn1ExplicitTag(
                     header.Tag,
                     inner);
@@ -40,26 +49,26 @@ namespace Microsoft.Framework.Asn1
             Subparser subparser;
             if (_parsers.TryGetValue(header.Tag, out subparser))
             {
-                return subparser(this, header, reader);
+                return subparser(this, header);
             }
 
             // Unknown tag, but we do have enough to read this node and move on, so do that.
-            return ParseUnknown(header, reader);
+            return ParseUnknown(header);
         }
 
-        private Asn1Oid ParseOid(BerHeader header, BinaryReader reader)
+        private Asn1Oid ParseOid(BerHeader header)
         {
-            byte[] octets = reader.ReadBytes(header.Length);
+            byte[] octets = _reader.ReadBytes(header.Length);
 
             // First Octet = 40*v1+v2
             int first = octets[0] / 40;
             int second = octets[0] % 40;
 
-            // Remaining octets use some weird encoding
             List<int> segments = new List<int>();
             segments.Add(first);
             segments.Add(second);
 
+            // Remaining octets are encoded as base-128 digits, where the highest bit indicates if more digits exist
             int idx = 1;
             while (idx < octets.Length)
             {
@@ -75,16 +84,16 @@ namespace Microsoft.Framework.Asn1
             return new Asn1Oid(
                 header.Class,
                 header.Tag,
-                string.Join(".", segments.Select(i => i.ToString())));
+                segments);
         }
 
-        private Asn1Sequence ParseSequence(BerHeader header, BinaryReader reader)
+        private Asn1Sequence ParseSequence(BerHeader header)
         {
-            long start = reader.BaseStream.Position;
+            long start = _reader.BaseStream.Position;
             List<Asn1Value> values = new List<Asn1Value>();
-            while ((reader.BaseStream.Position - start) < header.Length)
+            while ((_reader.BaseStream.Position - start) < header.Length)
             {
-                values.Add(ReadValue(reader));
+                values.Add(ReadValue());
             }
             return new Asn1Sequence(
                 header.Class,
@@ -92,10 +101,10 @@ namespace Microsoft.Framework.Asn1
                 values);
         }
 
-        private Asn1Value ParseUnknown(BerHeader header, BinaryReader reader)
+        private Asn1Value ParseUnknown(BerHeader header)
         {
             // Read the contents
-            var content = reader.ReadBytes(header.Length);
+            var content = _reader.ReadBytes(header.Length);
 
             // Construct the value!
             return new Asn1Unknown(
@@ -104,9 +113,9 @@ namespace Microsoft.Framework.Asn1
                 content);
         }
 
-        internal static BerHeader ReadHeader(BinaryReader reader)
+        internal BerHeader ReadHeader()
         {
-            byte lowTag = reader.ReadByte();
+            byte lowTag = _reader.ReadByte();
             byte classNumber = (byte)((lowTag & 0xC0) >> 6); // Extract top 2 bits and shift down
             bool primitive = ((lowTag & 0x20) == 0);
             int tag = lowTag & 0x1F; // Extract bottom 5 bits
@@ -116,12 +125,12 @@ namespace Microsoft.Framework.Asn1
             }
 
             // Read the length
-            byte lowLen = reader.ReadByte();
+            byte lowLen = _reader.ReadByte();
             var len = lowLen & 0x7F;
             if ((lowLen & 0x80) != 0 && len != 0) // Bit 8 set and not indeterminate length?
             {
                 // Len is actually the number of length octets left, each one is a base 256 "digit"
-                var lengthBytes = reader.ReadBytes(len);
+                var lengthBytes = _reader.ReadBytes(len);
                 len = lengthBytes.Aggregate(
                     seed: 0,
                     func: (l, r) => (l * 256) + r);

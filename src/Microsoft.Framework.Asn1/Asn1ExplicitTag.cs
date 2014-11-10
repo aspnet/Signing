@@ -16,5 +16,18 @@ namespace Microsoft.Framework.Asn1
         {
             visitor.Visit(this);
         }
+
+        public override bool Equals(object obj)
+        {
+            Asn1ExplicitTag other = obj as Asn1ExplicitTag;
+            return other != null &&
+                base.Equals(other) &&
+                Value.Equals(other.Value);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCodeCombiner.Start().Add(base.GetHashCode()).Add(Value);
+        }
     }
 }
