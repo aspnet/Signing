@@ -2,7 +2,7 @@
   "version": "1.0.0-*",
   "dependencies": {
     "Xunit.KRunner": "1.0.0-beta1",
-    "Signing": ""
+    "Microsoft.Framework.Signing": ""
   },
   "commands": {
     "test": "Xunit.KRunner"
