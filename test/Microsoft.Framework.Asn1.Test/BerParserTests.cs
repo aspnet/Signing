@@ -230,11 +230,29 @@ namespace Microsoft.Framework.Asn1.Test
         [Theory]
         [InlineData(new byte[] { 0x00, 0x48, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 0x6F, 0x00, 0x2C, 0x00, 0x20, 0x00, 0x57, 0x00, 0x6F, 0x00, 0x72, 0x00, 0x6C, 0x00, 0x64, 0x00, 0x21 }, "Hello, World!", Asn1StringType.BmpString, 0x1E /* BmpString */)]
         [InlineData(new byte[] { 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x2C, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64, 0x21 }, "Hello, World!", Asn1StringType.UTF8String, 0x0C /* UTF8String */)]
+        [InlineData(new byte[] { 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x2C, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64, 0x21 }, "Hello, World!", Asn1StringType.PrintableString, 0x13 /* PrintableString */)]
         public void ParseCanParseStrings(byte[] data, string str, Asn1StringType type, int tag)
         {
             // Arrange
             data = PrependHeader(data, tag);
             var expected = new Asn1String(str, type);
+
+            // Act
+            var actual = ParseValue(data);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [InlineData(new byte[] { 0x06, 0xB6, 0xC0 }, "1011011011")]
+        [InlineData(new byte[] { 0x06, 0x6e, 0x5d, 0xc0 }, "011011100101110111")]
+        [InlineData(new byte[] { 0x06, 0x6e, 0x5d, 0xe0 }, "011011100101110111")]
+        public void ParseCanParseBitStrings(byte[] data, string bitstring)
+        {
+            // Arrange
+            data = PrependHeader(data, Asn1Constants.Tags.BitString);
+            var expected = new Asn1BitString(bitstring.Select(c => c == '1'));
 
             // Act
             var actual = ParseValue(data);

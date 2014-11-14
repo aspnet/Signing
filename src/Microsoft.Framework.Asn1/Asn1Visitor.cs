@@ -56,6 +56,10 @@ namespace Microsoft.Framework.Asn1
         {
         }
 
+        public virtual void Visit(Asn1BitString value)
+        {
+        }
+
         protected void VisitSubValue(Asn1Value value)
         {
             VisitSubValues(SingleEnumerable(value));

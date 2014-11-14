@@ -49,6 +49,7 @@ namespace Microsoft.Framework.Asn1
     public enum Asn1StringType
     {
         BmpString,
-        UTF8String
+        UTF8String,
+        PrintableString
     }
 }

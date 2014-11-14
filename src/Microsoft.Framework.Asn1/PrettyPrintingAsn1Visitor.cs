@@ -51,6 +51,15 @@ namespace Microsoft.Framework.Asn1
             _output.WriteLine(line);
         }
 
+        public override void Visit(Asn1BitString value)
+        {
+            StringBuilder line = new StringBuilder();
+            BuildCommonPrefix(value, line);
+
+            line.Append("BIT STRING\t" + value.Bits.Count + " bits long");
+            _output.WriteLine(line);
+        }
+
         private static string FormatOid(Asn1Oid value)
         {
             var formatted = value.Oid;

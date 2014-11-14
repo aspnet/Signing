@@ -23,12 +23,15 @@ namespace Microsoft.Framework.Asn1
             { Asn1Constants.Tags.UtcTime, (p, h) => p.ParseUtcTime(h) },
             { Asn1Constants.Tags.BmpString, (p, h) => p.ParseString(h, Asn1StringType.BmpString) },
             { Asn1Constants.Tags.UTF8String, (p, h) => p.ParseString(h, Asn1StringType.UTF8String) },
+            { Asn1Constants.Tags.PrintableString, (p, h) => p.ParseString(h, Asn1StringType.PrintableString) },
+            { Asn1Constants.Tags.BitString, (p, h) => p.ParseBitString(h) },
             { Asn1Constants.Tags.Null, (p, h) => p.ParseNull(h) }
         };
 
         private static readonly Dictionary<Asn1StringType, Func<byte[], string>> _decoders = new Dictionary<Asn1StringType, Func<byte[], string>>() {
             { Asn1StringType.BmpString, DecodeBmpString },
-            { Asn1StringType.UTF8String, bytes => Encoding.UTF8.GetString(bytes) }
+            { Asn1StringType.UTF8String, bytes => Encoding.UTF8.GetString(bytes) },
+            { Asn1StringType.PrintableString, bytes => Encoding.ASCII.GetString(bytes) }
         };
 
         public BerParser(byte[] input)
@@ -151,6 +154,39 @@ namespace Microsoft.Framework.Asn1
             var val = DateTimeOffset.ParseExact(str, new string[] { "yyMMddHHmmssK", "yyMMddHHmmK" }, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces);
 
             return new Asn1UtcTime(val);
+        }
+
+        private Asn1BitString ParseBitString(BerHeader header)
+        {
+            // Read the contents
+            var content = _reader.ReadBytes(header.Length);
+
+            // First octet is the number of extra bits at the end
+            var extraBits = content[0];
+
+            // Remaining octets are the bitstring
+            var octets = content.Skip(1).ToArray();
+
+            // Convert to bools
+            var bits = octets.SelectMany(b => ToBools(b));
+
+            // Trim out the extra octets from the end and construct the bitstring
+            return new Asn1BitString(
+                header.Class,
+                header.Tag,
+                bits.Take((octets.Length * 8) - extraBits));
+        }
+
+        private IEnumerable<bool> ToBools(byte b)
+        {
+            yield return (b & 0x80) != 0;
+            yield return (b & 0x40) != 0;
+            yield return (b & 0x20) != 0;
+            yield return (b & 0x10) != 0;
+            yield return (b & 0x08) != 0;
+            yield return (b & 0x04) != 0;
+            yield return (b & 0x02) != 0;
+            yield return (b & 0x01) != 0;
         }
 
         private Asn1Value ParseUnknown(BerHeader header)
