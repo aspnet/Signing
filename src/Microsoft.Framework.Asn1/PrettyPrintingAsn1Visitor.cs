@@ -42,7 +42,13 @@ namespace Microsoft.Framework.Asn1
             StringBuilder line = new StringBuilder();
             BuildCommonPrefix(value, line);
 
-            line.Append("OID\t" + FormatOid(value));
+            string formatted = value.Oid;
+            if (!string.IsNullOrEmpty(value.FriendlyName))
+            {
+                formatted += " (" + value.FriendlyName + ")";
+            }
+
+            line.Append("OID\t" + formatted);
             _output.WriteLine(line);
         }
 
@@ -71,27 +77,6 @@ namespace Microsoft.Framework.Asn1
 
             line.Append("BOOLEAN\t" + value.Value.ToString().ToUpperInvariant());
             _output.WriteLine(line);
-        }
-
-        private static string FormatOid(Asn1Oid value)
-        {
-            var formatted = value.Oid;
-#if ASPNET50 || NET45
-            // On full CLR, we can use the Oid class to try and get a Friendly Name!
-            try
-            {
-                var oid = System.Security.Cryptography.Oid.FromOidValue(value.Oid, System.Security.Cryptography.OidGroup.All);
-                if (!string.IsNullOrEmpty(oid.FriendlyName))
-                {
-                    formatted = oid.Value + " (" + oid.FriendlyName + ")";
-                }
-            }
-            catch // Oid.FromOidValue may throw if the OID isn't recognized :(
-            {
-                formatted = value.Oid;
-            }
-#endif
-            return formatted;
         }
 
         public override void Visit(Asn1ExplicitTag value)
