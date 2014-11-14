@@ -261,6 +261,26 @@ namespace Microsoft.Framework.Asn1.Test
             Assert.Equal(expected, actual);
         }
 
+        [Theory]
+        [InlineData(new byte[] { 0x01 }, true)]
+        [InlineData(new byte[] { 0x02 }, true)]
+        [InlineData(new byte[] { 0x42 }, true)]
+        [InlineData(new byte[] { 0x56 }, true)]
+        [InlineData(new byte[] { 0xAF }, true)]
+        [InlineData(new byte[] { 0x00 }, false)]
+        public void ParseCanParseBooleans(byte[] data, bool value)
+        {
+            // Arrange
+            data = PrependHeader(data, Asn1Constants.Tags.Boolean);
+            var expected = new Asn1Boolean(value);
+
+            // Act
+            var actual = ParseValue(data);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
         private static byte[] PrependHeader(byte[] data, int tag)
         {
             return Enumerable.Concat(

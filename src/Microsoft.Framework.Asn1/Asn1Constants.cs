@@ -4,6 +4,7 @@
     {
         public static class Tags
         {
+            public static readonly int Boolean = 0x01;
             public static readonly int Integer = 0x02;
             public static readonly int BitString = 0x03;
             public static readonly int OctetString = 0x04;

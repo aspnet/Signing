@@ -25,6 +25,7 @@ namespace Microsoft.Framework.Asn1
             { Asn1Constants.Tags.UTF8String, (p, h) => p.ParseString(h, Asn1StringType.UTF8String) },
             { Asn1Constants.Tags.PrintableString, (p, h) => p.ParseString(h, Asn1StringType.PrintableString) },
             { Asn1Constants.Tags.BitString, (p, h) => p.ParseBitString(h) },
+            { Asn1Constants.Tags.Boolean, (p, h) => p.ParseBoolean(h) },
             { Asn1Constants.Tags.Null, (p, h) => p.ParseNull(h) }
         };
 
@@ -177,16 +178,16 @@ namespace Microsoft.Framework.Asn1
                 bits.Take((octets.Length * 8) - extraBits));
         }
 
-        private IEnumerable<bool> ToBools(byte b)
+        private Asn1Value ParseBoolean(BerHeader header)
         {
-            yield return (b & 0x80) != 0;
-            yield return (b & 0x40) != 0;
-            yield return (b & 0x20) != 0;
-            yield return (b & 0x10) != 0;
-            yield return (b & 0x08) != 0;
-            yield return (b & 0x04) != 0;
-            yield return (b & 0x02) != 0;
-            yield return (b & 0x01) != 0;
+            // Read the contents
+            var octets = _reader.ReadBytes(header.Length);
+
+            // Construct the value
+            return new Asn1Boolean(
+                header.Class,
+                header.Tag,
+                octets.FirstOrDefault() != 0x00);
         }
 
         private Asn1Value ParseUnknown(BerHeader header)
@@ -199,6 +200,18 @@ namespace Microsoft.Framework.Asn1
                 header.Class,
                 header.Tag,
                 content);
+        }
+
+        private IEnumerable<bool> ToBools(byte b)
+        {
+            yield return (b & 0x80) != 0;
+            yield return (b & 0x40) != 0;
+            yield return (b & 0x20) != 0;
+            yield return (b & 0x10) != 0;
+            yield return (b & 0x08) != 0;
+            yield return (b & 0x04) != 0;
+            yield return (b & 0x02) != 0;
+            yield return (b & 0x01) != 0;
         }
 
         private static string DecodeBmpString(byte[] data)

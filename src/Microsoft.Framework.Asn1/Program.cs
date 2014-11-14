@@ -14,6 +14,8 @@ namespace Microsoft.Framework.Asn1
                 var result = derParser.ReadValue();
                 var visitor = new PrettyPrintingAsn1Visitor(AnsiConsole.Output.Writer, ansi: true);
                 result.Accept(visitor);
+
+                AnsiConsole.Output.WriteLine("Encountered " + visitor.UnknownNodesEncountered.ToString() + " unknown nodes");
             }
         }
     }

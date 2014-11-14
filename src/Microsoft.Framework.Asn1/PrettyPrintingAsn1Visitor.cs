@@ -10,10 +10,14 @@ namespace Microsoft.Framework.Asn1
         private bool _ansi;
         private int? _explicitTag = null;
 
+        public int UnknownNodesEncountered { get; private set; }
+
         public PrettyPrintingAsn1Visitor(TextWriter output, bool ansi)
         {
             _output = output;
             _ansi = ansi;
+
+            UnknownNodesEncountered = 0;
         }
 
         public override void Visit(Asn1Value value)
@@ -57,6 +61,15 @@ namespace Microsoft.Framework.Asn1
             BuildCommonPrefix(value, line);
 
             line.Append("BIT STRING\t" + value.Bits.Count + " bits long");
+            _output.WriteLine(line);
+        }
+
+        public override void Visit(Asn1Boolean value)
+        {
+            StringBuilder line = new StringBuilder();
+            BuildCommonPrefix(value, line);
+
+            line.Append("BOOLEAN\t" + value.Value.ToString().ToUpperInvariant());
             _output.WriteLine(line);
         }
 
@@ -127,6 +140,8 @@ namespace Microsoft.Framework.Asn1
             BuildCommonPrefix(value, line);
             line.Append("UNKNOWN!");
             _output.WriteLine(line);
+
+            UnknownNodesEncountered++;
         }
 
         private void BuildCommonPrefix(Asn1Value value, StringBuilder line)
