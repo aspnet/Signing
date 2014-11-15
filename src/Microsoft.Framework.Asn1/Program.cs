@@ -8,14 +8,12 @@ namespace Microsoft.Framework.Asn1
     {
         public void Main(string[] args)
         {
-            using (var fileStream = new FileStream(args[0], FileMode.Open, FileAccess.Read, FileShare.None))
-            {
-                var derParser = new BerParser(fileStream);
-                var result = derParser.ReadValue();
-                var visitor = new PrettyPrintingAsn1Visitor(AnsiConsole.Output.Writer, ansi: true);
-                result.Accept(visitor);
+            var data = new Asn1OctetString(new byte[] { 0x01, 0x02, 0x03 });
 
-                AnsiConsole.Output.WriteLine("Encountered " + visitor.UnknownNodesEncountered.ToString() + " unknown nodes");
+            using (var fileStream = new FileStream(args[0], FileMode.Create, FileAccess.ReadWrite, FileShare.None))
+            {
+                var writer = new DerWriter(fileStream);
+                writer.WriteValue(data);
             }
         }
     }

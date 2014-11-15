@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 
 namespace Microsoft.Framework.Asn1
 {
@@ -73,7 +72,7 @@ namespace Microsoft.Framework.Asn1
 #if ASPNET50 || NET45
             try
             {
-                return System.Security.Cryptography.Oid.FromOidValue(oid, OidGroup.All).FriendlyName;
+                return System.Security.Cryptography.Oid.FromOidValue(oid, System.Security.Cryptography.OidGroup.All).FriendlyName;
             }
             catch
             {

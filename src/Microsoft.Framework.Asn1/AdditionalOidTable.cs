@@ -5,7 +5,7 @@ namespace Microsoft.Framework.Asn1
 {
     internal static class AdditionalOidTable
     {
-        public static readonly Dictionary<string, string> OidToName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+        public static readonly Dictionary<string, string> OidToName = new Dictionary<string, string>() {
             { "1.3.6.1.4.1.311", "Microsoft OID" },
             { "1.3.6.1.4.1.311.2", "Authenticode" },
             { "1.3.6.1.4.1.311.2.1.4", "SPC_INDIRECT_DATA_OBJID" },
