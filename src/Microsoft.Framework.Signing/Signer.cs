@@ -24,11 +24,11 @@ namespace PackageSigning
             SignerCertificate = signerCertificate;
         }
 
-        internal static Signer FromSignerInfo(SignerInfo signerInfo, X509Certificate2Collection certificates, HashAlgorithm publicKeyIdentifierHashAlgorithm)
+        internal static Signer FromSignerInfo(SignerInfo signerInfo, X509Certificate2Collection certificates)
         {
             return new Signer(
                 signerInfo.Certificate.Subject,
-                signerInfo.Certificate.ComputePublicKeyIdentifier(publicKeyIdentifierHashAlgorithm),
+                signerInfo.Certificate.ComputePublicKeyIdentifier(),
                 signerInfo.Certificate,
                 certificates);
         }

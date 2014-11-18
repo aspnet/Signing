@@ -13,9 +13,9 @@ namespace PackageSigning.Test
     {
         private const string TestPassword = "test";
         private static readonly string CertRoot = Path.GetFullPath("certs");
-        private static readonly string TestAuthorityCertPath = Path.Combine(CertRoot, "test.authority.pfx");
-        private static readonly string TestSigningCertPath = Path.Combine(CertRoot, "test.signing.pfx");
-        private static readonly string TestTimestampingCertPath = Path.Combine(CertRoot, "test.timestamping.pfx");
+        private static readonly string TestAuthorityCertPath = Path.Combine(CertRoot, "ca.pfx");
+        private static readonly string TestSigningCertPath = Path.Combine(CertRoot, "signing.pfx");
+        private static readonly string TestTimestampingCertPath = Path.Combine(CertRoot, "timestamping.pfx");
 
         private static X509Certificate2 GetCert(string path)
         {
@@ -41,7 +41,7 @@ namespace PackageSigning.Test
             var signature = Signature.Sign(file, cert, addlCerts);
 
             // Assert
-            Assert.Equal("CN=(TEST) K Signing Test Signing Certficate", signature.Signer.Subject);
+            Assert.Equal(GetCert(TestSigningCertPath).Subject, signature.Signer.Subject);
             Assert.Equal("xzJoraZpAoJ1X9whmjQT9HTkmSDpZ0I3GOhplksZsNI=", signature.Signer.Spki);
         }
 
@@ -57,11 +57,11 @@ namespace PackageSigning.Test
             var signature = Signature.Sign(file, cert, addlCerts);
 
             // Assert
-            Assert.Equal(2, signature.Signer.Certificates.Count());
+            Assert.Equal(2, signature.Signer.Certificates.Cast<X509Certificate2>().Count());
 
-            var authority = signature.Signer.Certificates.FirstOrDefault(c => !Equals(c, signature.Signer.SignerCertificate));
+            var authority = signature.Signer.Certificates.Cast<X509Certificate2>().FirstOrDefault(c => !Equals(c, signature.Signer.SignerCertificate));
             Assert.NotNull(authority);
-            Assert.Equal("CN=(TEST) K Signing Test Authority", authority.Subject);
+            Assert.Equal(GetCert(TestAuthorityCertPath).Subject, authority.Subject);
         }
 
         [Fact]
@@ -78,13 +78,13 @@ namespace PackageSigning.Test
 
             // Assert
             var verified = Signature.Verify(file, sigbytes);
-            var authority = signature.Signer.Certificates.FirstOrDefault(c => !Equals(c, signature.Signer.SignerCertificate));
+            var authority = signature.Signer.Certificates.Cast<X509Certificate2>().FirstOrDefault(c => !Equals(c, signature.Signer.SignerCertificate));
 
             Assert.NotNull(authority);
-            Assert.Equal(2, verified.Signer.Certificates.Count());
-            Assert.Equal("CN=(TEST) K Signing Test Signing Certficate", verified.Signer.Subject);
-            Assert.Equal("xzJoraZpAoJ1X9whmjQT9HTkmSDpZ0I3GOhplksZsNI=", verified.Signer.Spki);
-            Assert.Equal("CN=(TEST) K Signing Test Authority", authority.Subject);
+            Assert.Equal(2, verified.Signer.Certificates.Cast<X509Certificate2>().Count());
+            Assert.Equal(GetCert(TestSigningCertPath).Subject, verified.Signer.Subject);
+            Assert.Equal(GetCert(TestSigningCertPath).ComputePublicKeyIdentifier(), verified.Signer.Spki);
+            Assert.Equal(GetCert(TestAuthorityCertPath).Subject, authority.Subject);
         }
 
         private static byte[] CreateTestData(string content)

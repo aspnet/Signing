@@ -21,7 +21,7 @@ namespace PackageSigning
         {
             return new TrustedPublisher(
                 certificate.Subject,
-                certificate.ComputePublicKeyIdentifier(Signature.DefaultHashAlgorithm),
+                certificate.ComputePublicKeyIdentifier(),
                 certificate);
         }
 

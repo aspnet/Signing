@@ -4,11 +4,17 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace PackageSigning
 {
-    internal static class CryptoExtensions
+    public static class CryptoExtensions
     {
-        public static string ComputePublicKeyIdentifier(this X509Certificate2 self, HashAlgorithm algorithm)
+        public static string ComputePublicKeyIdentifier(this X509Certificate2 self)
         {
-            return Convert.ToBase64String(algorithm.ComputeHash(self.GetPublicKey()));
+            return ComputePublicKeyIdentifier(self, Signature.DefaultHashAlgorithmName);
+        }
+
+        public static string ComputePublicKeyIdentifier(this X509Certificate2 self, string algorithmName)
+        {
+            var algorithm = (HashAlgorithm)CryptoConfig.CreateFromName(algorithmName);
+            return algorithmName.ToLowerInvariant() + ":" + Convert.ToBase64String(algorithm.ComputeHash(self.GetPublicKey()));
         }
     }
 }

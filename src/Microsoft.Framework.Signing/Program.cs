@@ -11,6 +11,14 @@ namespace PackageSigning
     {
         public void Main(string[] args)
         {
+#if NET45 || ASPNET50
+            if (args.Length > 0 && string.Equals(args[0], "dbg", StringComparison.OrdinalIgnoreCase))
+            {
+                args = args.Skip(1).ToArray();
+                System.Diagnostics.Debugger.Launch();
+            }
+#endif
+
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.HelpOption("-h|--help");
             app.Command("sign", sign =>
@@ -90,7 +98,7 @@ namespace PackageSigning
                 AnsiConsole.Output.WriteLine("  " + element.Certificate.Subject);
                 AnsiConsole.Output.WriteLine("    Status: " + String.Join(", ", element.ChainElementStatus.Select(s => s.Status)));
                 AnsiConsole.Output.WriteLine("    Info:   " + element.Information);
-                AnsiConsole.Output.WriteLine("    SPKI:   " + element.Certificate.ComputePublicKeyIdentifier(Signature.DefaultHashAlgorithm));
+                AnsiConsole.Output.WriteLine("    SPKI:   " + element.Certificate.ComputePublicKeyIdentifier());
             }
 
             return 0;

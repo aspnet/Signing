@@ -12,7 +12,8 @@ namespace PackageSigning
 {
     public class Signature
     {
-        public static readonly HashAlgorithm DefaultHashAlgorithm = new SHA256Managed();
+        public static readonly string DefaultHashAlgorithmName = "sha256";
+        public static readonly HashAlgorithm DefaultHashAlgorithm = (HashAlgorithm)CryptoConfig.CreateFromName(DefaultHashAlgorithmName);
         private static readonly string Sha256Oid = "2.16.840.1.101.3.4.2.1";
         private static readonly string CodeSigningEKUOid = "1.3.6.1.5.5.7.3.3";
 
@@ -37,7 +38,7 @@ namespace PackageSigning
 
             // Read the signer
             var signerInfo = _signedCms.SignerInfos.Cast<SignerInfo>().FirstOrDefault();
-            Signer = Signer.FromSignerInfo(signerInfo, _signedCms.Certificates, DefaultHashAlgorithm);
+            Signer = Signer.FromSignerInfo(signerInfo, _signedCms.Certificates);
 
             ValidFromUtc = Signer.SignerCertificate.NotBefore;
             ValidToUtc = Signer.SignerCertificate.NotAfter;
@@ -99,10 +100,10 @@ namespace PackageSigning
                 identifierType = SubjectIdentifierType.IssuerAndSerialNumber;
             }
 
-            // if (!HasEku(cert, CodeSigningEKUOid))
-            // {
-            //     throw new Exception("Signing certificate must have the codeSigning extended key usage (OID: 1.3.6.1.5.5.7.3.3)");
-            // }
+            if (!HasEku(cert, CodeSigningEKUOid))
+            {
+                throw new Exception("Signing certificate must have the codeSigning extended key usage (OID: 1.3.6.1.5.5.7.3.3)");
+            }
 
             // Create a content info and start a signed CMS
             var contentInfo = new ContentInfo(targetData);
