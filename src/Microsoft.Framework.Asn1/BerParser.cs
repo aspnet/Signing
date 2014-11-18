@@ -122,6 +122,9 @@ namespace Microsoft.Framework.Asn1
             return new Asn1Integer(
                 header.Class,
                 header.Tag,
+
+                // Weird stuff seemed to happen when I didn't first cast to sbyte, so
+                // even though the editor keeps telling you it's unnecessary, leave this alone :).
                 data.Skip(1).Aggregate((int)(sbyte)data[0], (l, r) => l * 256 + r));
         }
 
