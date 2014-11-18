@@ -24,3 +24,6 @@ nuget.exe
 *.ncrunchsolution
 *.*sdf
 *.ipch
+
+# Generated signatures shouldn't be uploaded :)
+*.sig

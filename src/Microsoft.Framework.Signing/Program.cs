@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime.Common.CommandLine;
+using PackageSigning.Native;
 
 namespace PackageSigning
 {
@@ -21,6 +23,13 @@ namespace PackageSigning
 
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.HelpOption("-h|--help");
+            app.Command("timestamp", timestamp =>
+            {
+                timestamp.Description = "Timestamps an existing signature";
+                var signature = timestamp.Argument("signature", "the path to the signature file");
+                var authority = timestamp.Argument("url", "the path to a Authenticode trusted timestamping authority");
+                timestamp.OnExecute(() => Timestamp(signature.Value, authority.Value));
+            }, addHelpCommand: false);
             app.Command("sign", sign =>
             {
                 sign.Description = "Signs a file";
@@ -51,6 +60,24 @@ namespace PackageSigning
             app.Execute(args);
         }
 
+        private int Timestamp(string signature, string authority)
+        {
+            // Open the signature and decode it
+            byte[] data = PemFormatter.Unformat(File.ReadAllBytes(signature));
+
+            // Load the NativeCms object
+            byte[] digest;
+            using (var cms = NativeCms.Decode(data, detached: true))
+            {
+                // Read the encrypted digest
+                digest = cms.GetEncryptedDigest();
+            }
+
+            // TODO: Actually timestamp!
+
+            return 0;
+        }
+
         private async Task<int> Verify(string fileName, string signatureFile)
         {
             // Default values
@@ -67,13 +94,6 @@ namespace PackageSigning
             AnsiConsole.Output.WriteLine("    " + sig.Signer.Spki);
             AnsiConsole.Output.WriteLine("  \x1b[36;1m[Issuer]\x1b[30;0m");
             AnsiConsole.Output.WriteLine("    " + sig.Signer.SignerCertificate.Issuer);
-
-            AnsiConsole.Output.WriteLine("");
-            AnsiConsole.Output.WriteLine("\x1b[36;1mSignature Validity\x1b[30;0m");
-            AnsiConsole.Output.WriteLine("  From (UTC) " + ((sig.ValidFromUtc?.ToString("O")) ?? "the beginning of time"));
-            AnsiConsole.Output.WriteLine("  To   (UTC) " + ((sig.ValidToUtc?.ToString("O")) ?? "the end of time"));
-            AnsiConsole.Output.WriteLine("  Time (UTC) " + sig.Timestamp.ToString("O"));
-            AnsiConsole.Output.WriteLine("  Signature is " + (sig.WithinValidityPeriod ? "WITHIN" : "OUTSIDE") + " it's validity period");
 
             // Check trust
             var trust = new TrustContext();
