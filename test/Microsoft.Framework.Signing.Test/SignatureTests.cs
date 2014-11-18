@@ -29,7 +29,7 @@ namespace Microsoft.Framework.Signing.Test
             return certs;
         }
 
-        [Fact(Skip = "Temporarily disabled")]
+        [Fact]
         public void SignGeneratesSignatureForFileFromProvidedCertificate()
         {
             // Arrange
@@ -42,10 +42,10 @@ namespace Microsoft.Framework.Signing.Test
 
             // Assert
             Assert.Equal(GetCert(TestSigningCertPath).Subject, signature.Signer.Subject);
-            Assert.Equal("xzJoraZpAoJ1X9whmjQT9HTkmSDpZ0I3GOhplksZsNI=", signature.Signer.Spki);
+            Assert.Equal(GetCert(TestSigningCertPath).ComputePublicKeyIdentifier(), signature.Signer.Spki);
         }
 
-        [Fact(Skip = "Temporarily disabled")]
+        [Fact]
         public void SignEmbedsEntireCertificateChainInKeyInfo()
         {
             // Arrange
@@ -64,7 +64,7 @@ namespace Microsoft.Framework.Signing.Test
             Assert.Equal(GetCert(TestAuthorityCertPath).Subject, authority.Subject);
         }
 
-        [Fact(Skip = "Temporarily disabled")]
+        [Fact]
         public void WriteCreatesSignatureThatCanBeVerified()
         {
             // Arrange

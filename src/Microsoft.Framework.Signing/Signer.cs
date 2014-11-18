@@ -17,6 +17,7 @@ namespace Microsoft.Framework.Signing
         
         private Signer(string subject, string spki, X509Certificate2 signerCertificate, X509Certificate2Collection certificates)
         {
+            Subject = subject;
             Spki = spki;
             Certificates = certificates;
             SignerCertificate = signerCertificate;

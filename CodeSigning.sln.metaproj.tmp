@@ -28,6 +28,8 @@
       <SolutionConfiguration xmlns="">
   <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\K\CodeSigning\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
   <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\K\CodeSigning\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{4D62F2A4-0D1A-404E-8964-E5A9A0A79572}" AbsolutePath="C:\Code\Git\K\CodeSigning\src\Microsoft.Framework.Asn1\Microsoft.Framework.Asn1.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{B9C6ED83-A349-4AF3-9F1E-8C9F47FE4DB7}" AbsolutePath="C:\Code\Git\K\CodeSigning\test\Microsoft.Framework.Asn1.Test\Microsoft.Framework.Asn1.Test.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
 </SolutionConfiguration>
     </CurrentSolutionConfigurationContents>
   </PropertyGroup>
@@ -39,6 +41,8 @@
         <SolutionConfiguration xmlns="">
   <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\K\CodeSigning\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
   <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\K\CodeSigning\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{4D62F2A4-0D1A-404E-8964-E5A9A0A79572}" AbsolutePath="C:\Code\Git\K\CodeSigning\src\Microsoft.Framework.Asn1\Microsoft.Framework.Asn1.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{B9C6ED83-A349-4AF3-9F1E-8C9F47FE4DB7}" AbsolutePath="C:\Code\Git\K\CodeSigning\test\Microsoft.Framework.Asn1.Test\Microsoft.Framework.Asn1.Test.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
 </SolutionConfiguration>
       </Content>
     </SolutionConfiguration>
@@ -49,6 +53,8 @@
         <SolutionConfiguration xmlns="">
   <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\K\CodeSigning\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
   <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\K\CodeSigning\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{4D62F2A4-0D1A-404E-8964-E5A9A0A79572}" AbsolutePath="C:\Code\Git\K\CodeSigning\src\Microsoft.Framework.Asn1\Microsoft.Framework.Asn1.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{B9C6ED83-A349-4AF3-9F1E-8C9F47FE4DB7}" AbsolutePath="C:\Code\Git\K\CodeSigning\test\Microsoft.Framework.Asn1.Test\Microsoft.Framework.Asn1.Test.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
 </SolutionConfiguration>
       </Content>
     </SolutionConfiguration>
@@ -58,6 +64,8 @@
       <SolutionConfiguration xmlns="">
   <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\K\CodeSigning\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
   <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\K\CodeSigning\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{4D62F2A4-0D1A-404E-8964-E5A9A0A79572}" AbsolutePath="C:\Code\Git\K\CodeSigning\src\Microsoft.Framework.Asn1\Microsoft.Framework.Asn1.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{B9C6ED83-A349-4AF3-9F1E-8C9F47FE4DB7}" AbsolutePath="C:\Code\Git\K\CodeSigning\test\Microsoft.Framework.Asn1.Test\Microsoft.Framework.Asn1.Test.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
 </SolutionConfiguration>
     </CurrentSolutionConfigurationContents>
   </PropertyGroup>

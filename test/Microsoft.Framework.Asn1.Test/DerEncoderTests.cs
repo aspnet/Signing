@@ -5,7 +5,7 @@ using Xunit;
 
 namespace Microsoft.Framework.Asn1.Test
 {
-    public class DerWriterTests
+    public class DerEncoderTests
     {
         [Fact]
         public void WriterCanWriteLowTagHeader()
@@ -17,7 +17,7 @@ namespace Microsoft.Framework.Asn1.Test
             var expected = WrapData(new byte[] { 0x04, 0x0A }, data);
 
             // Act
-            var actual = WriteValue(val);
+            var actual = DerEncoder.Encode(val);
 
             // Assert
             Assert.Equal(expected, actual);
@@ -41,21 +41,10 @@ namespace Microsoft.Framework.Asn1.Test
             }, data);
 
             // Act
-            var actual = WriteValue(val);
+            var actual = DerEncoder.Encode(val);
 
             // Assert
             Assert.Equal(expected, actual);
-        }
-
-        private byte[] WriteValue(Asn1OctetString val)
-        {
-            using (var stream = new MemoryStream())
-            {
-                var writer = new DerWriter(stream);
-                writer.WriteValue(val);
-                stream.Flush();
-                return stream.ToArray();
-            }
         }
 
         private byte[] WrapData(byte[] expectedHeader, byte[] data)
