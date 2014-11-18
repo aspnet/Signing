@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Text;
 using System.Security.Cryptography.Pkcs;
+using System.Collections.Generic;
 
 namespace PackageSigning
 {
@@ -19,18 +20,24 @@ namespace PackageSigning
 
         private SignedCms _signedCms;
 
+        /// <summary>
+        /// Gets information about the certificate that created the signature
+        /// </summary>
         public Signer Signer { get; private set; }
-        public DateTime? ValidFromUtc { get; private set; }
-        public DateTime? ValidToUtc { get; private set; }
-        public DateTime TimestampUtc { get; private set; }
 
-        public bool WithinValidityPeriod {
-            get
-            {
-                return (ValidFromUtc == null || ValidFromUtc.Value <= TimestampUtc) &&
-                    (ValidToUtc == null || ValidToUtc.Value >= TimestampUtc);
-            }
-        }
+        /// <summary>
+        /// Gets a list of <see cref="Signer"/> objects representing other certificates that countersigned the data.
+        /// </summary>
+        public IEnumerable<Signer> CounterSigners { get; private set; }
+
+        /// <summary>
+        /// Gets a trusted timestamp indicating when the signature was generated.
+        /// </summary>
+        /// <remarks>
+        /// If this value is null, a trusted timestamp was not embedded in the signature and 
+        /// the current system time should be used during verification.
+        /// </remarks>
+        public DateTime? TimestampUtc { get; private set; }
 
         private Signature(SignedCms signedCms)
         {
@@ -39,12 +46,13 @@ namespace PackageSigning
             // Read the signer
             var signerInfo = _signedCms.SignerInfos.Cast<SignerInfo>().FirstOrDefault();
             Signer = Signer.FromSignerInfo(signerInfo, _signedCms.Certificates);
-
-            ValidFromUtc = Signer.SignerCertificate.NotBefore;
-            ValidToUtc = Signer.SignerCertificate.NotAfter;
-            TimestampUtc = DateTime.UtcNow;
         }
 
+        /// <summary>
+        /// Writes the signature to the specified file.
+        /// </summary>
+        /// <param name="fileName">The name of the file to write the signature to.</param>
+        /// <returns>A task that completes when the signature has been written to the file.</returns>
         public async Task WriteAsync(string fileName)
         {
             using (var strm = new FileStream(fileName, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
@@ -53,12 +61,21 @@ namespace PackageSigning
             }
         }
 
+        /// <summary>
+        /// Writes the signature to the specified <see cref="Stream"/>.
+        /// </summary>
+        /// <param name="target">The <see cref="Stream"/> to write the signature to.</param>
+        /// <returns>A task that completes when the signature has been written to the stream.</returns>
         public Task WriteAsync(Stream target)
         {
             var array = ToByteArray();
             return target.WriteAsync(array, 0, array.Length);
         }
 
+        /// <summary>
+        /// Returns a byte array containing the encoded signature data.
+        /// </summary>
+        /// <returns>A byte array containing the encoded signature data.</returns>
         public byte[] ToByteArray()
         {
             return PemFormatter.Format(
@@ -67,6 +84,23 @@ namespace PackageSigning
                 footer: "END CMS");
         }
 
+        /// <summary>
+        /// Creates a signature for the specified file, using the specified certificate chain, 
+        /// and using the provided password to decrypt the certificate file
+        /// </summary>
+        /// <param name="targetFileName">The file to be signed</param>
+        /// <param name="certificateChain">
+        /// A file containing certificates to be used to sign the file (and to be embedded in the signature)
+        /// </param>
+        /// <param name="password">A password that can be used to decrypt the provided file</param>
+        /// <returns>A task that yields the created signature data upon completion</returns>
+        /// <remarks>
+        /// If there are multiple certificates in the file specified by <paramref name="certificateChain"/>, 
+        /// the first one will be used to encrypt the digest. If that certificate does not have the required 
+        /// Extended Key Usage value (Code Signing, OID: 1.3.6.1.5.5.7.3.3), or if it does not have an 
+        /// accessible private key, an exception will be thrown. All certificates in the provided file 
+        /// will be embedded in the signature.
+        /// </remarks>
         public static Task<Signature> SignAsync(string targetFileName, string certificateChain, string password)
         {
             var cert = new X509Certificate2(certificateChain, password);
@@ -75,19 +109,88 @@ namespace PackageSigning
             return SignAsync(targetFileName, cert, chain);
         }
 
-        public static async Task<Signature> SignAsync(string targetFileName, X509Certificate2 cert, X509Certificate2Collection additionalCertificates)
+        /// <summary>
+        /// Creates a signature for the specified file, using the specified certificate, 
+        /// and embedding the specified additional certificates in the signature to assist 
+        /// in building a certificate chain
+        /// </summary>
+        /// <param name="targetFileName">The file to be signed</param>
+        /// <param name="signingCert">The certificate to be used to sign the file</param>
+        /// <returns>A task that yields the created signature data upon completion</returns>
+        /// <remarks>
+        /// If the certificate specified by <paramref name="signingCert"/> does not have the required 
+        /// Extended Key Usage value (Code Signing, OID: 1.3.6.1.5.5.7.3.3), or if it does not have an 
+        /// accessible private key, an exception will be thrown.
+        /// </remarks>
+        public static Task<Signature> SignAsync(string targetFileName, X509Certificate2 signingCert)
+        {
+            return SignAsync(targetFileName, signingCert, new X509Certificate2Collection());
+        }
+
+        /// <summary>
+        /// Creates a signature for the specified file, using the specified certificate, 
+        /// and embedding the specified additional certificates in the signature to assist 
+        /// in building a certificate chain
+        /// </summary>
+        /// <param name="targetFileName">The file to be signed</param>
+        /// <param name="signingCert">The certificate to be used to sign the file</param>
+        /// <param name="additionalCertificates">
+        /// Additional certificates which will be embedded in the signature to assist in building
+        /// a certificate chain during verification
+        /// </param>
+        /// <returns>A task that yields the created signature data upon completion</returns>
+        /// <remarks>
+        /// If the certificate specified by <paramref name="signingCert"/> does not have the required 
+        /// Extended Key Usage value (Code Signing, OID: 1.3.6.1.5.5.7.3.3), or if it does not have an 
+        /// accessible private key, an exception will be thrown.
+        /// </remarks>
+        public static async Task<Signature> SignAsync(string targetFileName, X509Certificate2 signingCert, X509Certificate2Collection additionalCertificates)
         {
             using (var strm = new FileStream(targetFileName, FileMode.Open, FileAccess.Read, FileShare.None))
             {
-                return await SignAsync(strm, cert, additionalCertificates);
+                return await SignAsync(strm, signingCert, additionalCertificates);
             }
         }
 
-        public static async Task<Signature> SignAsync(Stream targetData, X509Certificate2 cert, X509Certificate2Collection additionalCertificates)
+        /// <summary>
+        /// Creates a signature for the specified <see cref="Stream"/>, using the specified certificate, 
+        /// and embedding the specified additional certificates in the signature to assist 
+        /// in building a certificate chain
+        /// </summary>
+        /// <param name="targetData">The <see cref="Stream"/> containing the data to sign.</param>
+        /// <param name="signingCert">The certificate to be used to sign the file.</param>
+        /// <param name="additionalCertificates">
+        /// Additional certificates which will be embedded in the signature to assist in building
+        /// a certificate chain during verification.
+        /// </param>
+        /// <returns>A task that yields the created signature data upon completion</returns>
+        /// <remarks>
+        /// If the certificate specified by <paramref name="signingCert"/> does not have the required 
+        /// Extended Key Usage value (Code Signing, OID: 1.3.6.1.5.5.7.3.3), or if it does not have an 
+        /// accessible private key, an exception will be thrown.
+        /// </remarks>
+        public static async Task<Signature> SignAsync(Stream targetData, X509Certificate2 signingCert, X509Certificate2Collection additionalCertificates)
         {
-            return Sign(await ReadStreamToMemoryAsync(targetData), cert, additionalCertificates);
+            return Sign(await ReadStreamToMemoryAsync(targetData), signingCert, additionalCertificates);
         }
 
+        /// <summary>
+        /// Creates a signature for the specified data, using the specified certificate, 
+        /// and embedding the specified additional certificates in the signature to assist
+        /// in building a certificate chain
+        /// </summary>
+        /// <param name="targetData">The data to sign.</param>
+        /// <param name="signingCert">The certificate to be used to sign the file.</param>
+        /// <param name="additionalCertificates">
+        /// Additional certificates which will be embedded in the signature to assist in building
+        /// a certificate chain during verification.
+        /// </param>
+        /// <returns>The created signature data</returns>
+        /// <remarks>
+        /// If the certificate specified by <paramref name="signingCert"/> does not have the required 
+        /// Extended Key Usage value (Code Signing, OID: 1.3.6.1.5.5.7.3.3), or if it does not have an 
+        /// accessible private key, an exception will be thrown.
+        /// </remarks>
         public static Signature Sign(byte[] targetData, X509Certificate2 cert, X509Certificate2Collection additionalCertificates)
         {
             // Check that the cert meets the required criteria
@@ -139,6 +242,20 @@ namespace PackageSigning
             return new Signature(signedCms);
         }
 
+        /// <summary>
+        /// Loads and verifies the digest of the signature in the signature file specified by
+        /// <paramref name="signatureFile"/> against the content in the file specified by 
+        /// <paramref name="fileName"/>.
+        /// </summary>
+        /// <param name="fileName">The file containing the content to be verified.</param>
+        /// <param name="signatureFile">The file containing the signature to verify.</param>
+        /// <returns>A task that yields the loaded signature data upon completion</returns>
+        /// <remarks>
+        /// This method does NOT check if the certificate that generated the signature is trusted,
+        /// only that the signer's public key can be used to decrypt the digest and that the
+        /// digest matches the content provided in <paramref name="fileName"/>. Trust verification
+        /// is provided by the <see cref="TrustContext"/> class.
+        /// </remarks>
         public static async Task<Signature> VerifyAsync(string fileName, string signatureFile)
         {
             using (var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.None))
@@ -150,18 +267,46 @@ namespace PackageSigning
             }
         }
 
-        public static async Task<Signature> VerifyAsync(Stream file, Stream signature)
+        /// <summary>
+        /// Loads and verifies the digest of the signature in the signature data provided in
+        /// <paramref name="signature"/> against the content in the data provided in
+        /// <paramref name="content"/>.
+        /// </summary>
+        /// <param name="content">A <see cref="Stream"/> that can be used to read the content to be verified.</param>
+        /// <param name="signature">A <see cref="Stream"/> that can be used to read the signature to verify.</param>
+        /// <returns>A task that yields the loaded signature data upon completion</returns>
+        /// <remarks>
+        /// This method does NOT check if the certificate that generated the signature is trusted,
+        /// only that the signer's public key can be used to decrypt the digest and that the
+        /// digest matches the content provided in <paramref name="content"/>. Trust verification
+        /// is provided by the <see cref="TrustContext"/> class.
+        /// </remarks>
+        public static async Task<Signature> VerifyAsync(Stream content, Stream signature)
         {
-            return Verify(await ReadStreamToMemoryAsync(file), await ReadStreamToMemoryAsync(signature));
+            return Verify(await ReadStreamToMemoryAsync(content), await ReadStreamToMemoryAsync(signature));
         }
 
-        public static Signature Verify(byte[] file, byte[] signature)
+        /// <summary>
+        /// Loads and verifies the digest of the signature in the signature data provided in
+        /// <paramref name="signature"/> against the content in the data provided in
+        /// <paramref name="content"/>.
+        /// </summary>
+        /// <param name="content">The content to be verified.</param>
+        /// <param name="signature">The signature to verify.</param>
+        /// <returns>A task that yields the loaded signature data upon completion</returns>
+        /// <remarks>
+        /// This method does NOT check if the certificate that generated the signature is trusted,
+        /// only that the signer's public key can be used to decrypt the digest and that the
+        /// digest matches the content provided in <paramref name="content"/>. Trust verification
+        /// is provided by the <see cref="TrustContext"/> class.
+        /// </remarks>
+        public static Signature Verify(byte[] content, byte[] signature)
         {
             // The file is actually UTF-8 Base-64 Encoded, so decode that
             var decoded = PemFormatter.Unformat(signature);
 
             // Load the content
-            var contentInfo = new ContentInfo(file);
+            var contentInfo = new ContentInfo(content);
 
             // Create a signed cms and decode the signature into it
             var signedCms = new SignedCms(contentInfo, detached: true);

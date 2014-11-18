@@ -14,8 +14,7 @@ namespace PackageSigning
         public string Spki { get; private set; }
         public X509Certificate2 SignerCertificate { get; private set; }
         public X509Certificate2Collection Certificates { get; private set; }
-        public IEnumerable<Signer> CounterSigners { get; private set; }
-
+        
         private Signer(string subject, string spki, X509Certificate2 signerCertificate, X509Certificate2Collection certificates)
         {
             Subject = subject;

@@ -72,7 +72,7 @@ namespace PackageSigning
             AnsiConsole.Output.WriteLine("\x1b[36;1mSignature Validity\x1b[30;0m");
             AnsiConsole.Output.WriteLine("  From (UTC) " + ((sig.ValidFromUtc?.ToString("O")) ?? "the beginning of time"));
             AnsiConsole.Output.WriteLine("  To   (UTC) " + ((sig.ValidToUtc?.ToString("O")) ?? "the end of time"));
-            AnsiConsole.Output.WriteLine("  Time (UTC) " + sig.TimestampUtc.ToString("O"));
+            AnsiConsole.Output.WriteLine("  Time (UTC) " + sig.Timestamp.ToString("O"));
             AnsiConsole.Output.WriteLine("  Signature is " + (sig.WithinValidityPeriod ? "WITHIN" : "OUTSIDE") + " it's validity period");
 
             // Check trust
