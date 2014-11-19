@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime.Common.CommandLine;
@@ -60,7 +61,7 @@ namespace Microsoft.Framework.Signing
             app.Execute(args);
         }
 
-        private int Timestamp(string signature, string authority)
+        private async Task<int> Timestamp(string signature, string authority)
         {
             // Open the signature and decode it
             byte[] data = PemFormatter.Unformat(File.ReadAllBytes(signature));
@@ -73,7 +74,26 @@ namespace Microsoft.Framework.Signing
                 digest = cms.GetEncryptedDigest();
             }
 
-            // TODO: Actually timestamp!
+            // Build the ASN.1 Timestamp Packet
+            byte[] packet = Asn1Util.CreateTimestampRequest(digest);
+
+            var client = new HttpClient();
+
+            // Timestamp it!
+            AnsiConsole.Output.WriteLine("Posting to timestamping server: " + authority);
+            var content = new StringContent(Convert.ToBase64String(packet));
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+            var response = await client.PostAsync(authority, content);
+            if (!response.IsSuccessStatusCode)
+            {
+                AnsiConsole.Error.WriteLine("HTTP Error: " + response.StatusCode.ToString());
+                return -1;
+            }
+
+            // Save the result
+            var responsePacket = await response.Content.ReadAsStringAsync();
+            var responseBytes = Convert.FromBase64String(responsePacket);
+            File.WriteAllBytes(signature + ".ts", PemFormatter.Format(responseBytes, "TIMESTAMP"));
 
             return 0;
         }
