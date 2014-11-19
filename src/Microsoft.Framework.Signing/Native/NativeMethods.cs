@@ -5,6 +5,14 @@ namespace Microsoft.Framework.Signing.Native
 {
     internal static class NativeMethods
     {
+        internal const uint PKCS_ATTRIBUTE = 22;
+
+        internal const uint PKCS_7_ASN_ENCODING = 0x10000;
+        internal const uint X509_ASN_ENCODING = 0x1;
+
+        internal const int ERROR_MORE_DATA = 234;
+
+        internal const string OID_PKCS9_COUNTERSIGNATURE = "1.2.840.113549.1.9.6";
 
         // http://msdn.microsoft.com/en-us/library/windows/desktop/aa380228(v=vs.85).aspx
         [DllImport("Crypt32.dll", SetLastError = true)]
@@ -36,6 +44,83 @@ namespace Microsoft.Framework.Signing.Native
             uint dwIndex,
             IntPtr pvData,
             ref uint pcbData);
+
+        // http://msdn.microsoft.com/en-us/library/windows/desktop/aa380220(v=vs.85).aspx
+        [DllImport("Crypt32.dll", SetLastError = true)]
+        public static extern bool CryptMsgControl(
+            SafeCryptMsgHandle hCryptMsg,
+            uint dwFlags,
+            CMSG_CONTROL_TYPE dwCtrlType,
+            IntPtr pvCtrlPara);
+
+        // http://msdn.microsoft.com/en-us/library/windows/desktop/aa379922(v=vs.85).aspx
+        [DllImport("Crypt32.dll", SetLastError = true)]
+        public static extern bool CryptEncodeObjectEx(
+            uint dwCertEncodingType,
+            IntPtr lpszStructType,
+            IntPtr pvStructInfo,
+            uint dwFlags,
+            IntPtr pEncodePara,
+            IntPtr pvEncoded,
+            ref uint pcbEncoded);
+
+        internal static int GetHRForWin32Error(int err)
+        {
+            if ((err & 0x80000000) == 0x80000000)
+                return err;
+            else
+                return (err & 0x0000FFFF) | unchecked((int)0x80070000);
+        }
+    }
+
+    // http://msdn.microsoft.com/en-us/library/windows/desktop/aa381139(v=vs.85).aspx
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct CRYPT_ATTRIBUTE
+    {
+        [MarshalAs(UnmanagedType.LPStr)]
+        public string pszObjId;
+
+        public uint cValue;
+        public IntPtr rgValue;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct CMSG_CTRL_ADD_SIGNER_UNAUTH_ATTR_PARA
+    {
+        public uint cbSize;
+        public uint dwSignerIndex;
+        public CRYPT_INTEGER_BLOB BLOB;
+    }
+
+    // http://msdn.microsoft.com/en-us/library/windows/desktop/aa381414(v=vs.85).aspx
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct CRYPT_INTEGER_BLOB
+    {
+        public uint cbData;
+        public IntPtr pbData;
+    }
+
+    internal enum CMSG_CONTROL_TYPE : uint
+    {
+        CMSG_CTRL_VERIFY_SIGNATURE = 1,
+        CMSG_CTRL_DECRYPT = 2,
+        CMSG_CTRL_VERIFY_HASH = 5,
+        CMSG_CTRL_ADD_SIGNER = 6,
+        CMSG_CTRL_DEL_SIGNER = 7,
+        CMSG_CTRL_ADD_SIGNER_UNAUTH_ATTR = 8,
+        CMSG_CTRL_DEL_SIGNER_UNAUTH_ATTR = 9,
+        CMSG_CTRL_ADD_CERT = 10,
+        CMSG_CTRL_DEL_CERT = 11,
+        CMSG_CTRL_ADD_CRL = 12,
+        CMSG_CTRL_DEL_CRL = 13,
+        CMSG_CTRL_ADD_ATTR_CERT = 14,
+        CMSG_CTRL_DEL_ATTR_CERT = 15,
+        CMSG_CTRL_KEY_TRANS_DECRYPT = 16,
+        CMSG_CTRL_KEY_AGREE_DECRYPT = 17,
+        CMSG_CTRL_MAIL_LIST_DECRYPT = 18,
+        CMSG_CTRL_VERIFY_SIGNATURE_EX = 19,
+        CMSG_CTRL_ADD_CMS_SIGNER_INFO = 20,
+        CMSG_CTRL_ENABLE_STRONG_SIGNATURE = 21
     }
 
     internal enum CMSG_GETPARAM_TYPE : uint
