@@ -57,9 +57,9 @@ namespace Microsoft.Framework.Signing.Test
             var signature = Signature.Sign(file, cert, addlCerts);
 
             // Assert
-            Assert.Equal(2, signature.Signer.Certificates.Cast<X509Certificate2>().Count());
+            Assert.Equal(2, signature.Certificates.Cast<X509Certificate2>().Count());
 
-            var authority = signature.Signer.Certificates.Cast<X509Certificate2>().FirstOrDefault(c => !Equals(c, signature.Signer.SignerCertificate));
+            var authority = signature.Certificates.Cast<X509Certificate2>().FirstOrDefault(c => !Equals(c, signature.Signer.SignerCertificate));
             Assert.NotNull(authority);
             Assert.Equal(GetCert(TestAuthorityCertPath).Subject, authority.Subject);
         }
@@ -78,10 +78,10 @@ namespace Microsoft.Framework.Signing.Test
 
             // Assert
             var verified = Signature.Verify(file, sigbytes);
-            var authority = signature.Signer.Certificates.Cast<X509Certificate2>().FirstOrDefault(c => !Equals(c, signature.Signer.SignerCertificate));
+            var authority = signature.Certificates.Cast<X509Certificate2>().FirstOrDefault(c => !Equals(c, signature.Signer.SignerCertificate));
 
             Assert.NotNull(authority);
-            Assert.Equal(2, verified.Signer.Certificates.Cast<X509Certificate2>().Count());
+            Assert.Equal(2, verified.Certificates.Cast<X509Certificate2>().Count());
             Assert.Equal(GetCert(TestSigningCertPath).Subject, verified.Signer.Subject);
             Assert.Equal(GetCert(TestSigningCertPath).ComputePublicKeyIdentifier(), verified.Signer.Spki);
             Assert.Equal(GetCert(TestAuthorityCertPath).Subject, authority.Subject);

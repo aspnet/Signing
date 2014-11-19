@@ -127,13 +127,15 @@ namespace Microsoft.Framework.Signing
             var sig = await Signature.VerifyAsync(fileName, signatureFile);
 
             // Display the signature data
-            AnsiConsole.Output.WriteLine("\x1b[32;1mSigner Information:\x1b[30;0m");
-            AnsiConsole.Output.WriteLine("  \x1b[36;1m[Subject]\x1b[30;0m");
-            AnsiConsole.Output.WriteLine("    " + sig.Signer.Subject);
-            AnsiConsole.Output.WriteLine("  \x1b[36;1m[SPKI]\x1b[30;0m");
-            AnsiConsole.Output.WriteLine("    " + sig.Signer.Spki);
-            AnsiConsole.Output.WriteLine("  \x1b[36;1m[Issuer]\x1b[30;0m");
-            AnsiConsole.Output.WriteLine("    " + sig.Signer.SignerCertificate.Issuer);
+            AnsiConsole.Output.WriteLine("Signer Information:");
+            DumpSigner(sig, sig.Signer);
+
+            foreach (var counterSigner in sig.CounterSigners)
+            {
+                AnsiConsole.Output.WriteLine("");
+                AnsiConsole.Output.WriteLine("\x1b[32;1mCountersigner Information:\x1b[30;0m");
+                DumpSigner(sig, counterSigner);
+            }
 
             // Check trust
             var trust = new TrustContext();
@@ -148,18 +150,6 @@ namespace Microsoft.Framework.Signing
 
             AnsiConsole.Output.WriteLine("");
             AnsiConsole.Output.WriteLine("");
-
-            AnsiConsole.Output.WriteLine("Trust Chain:");
-            var chain = new X509Chain();
-            chain.ChainPolicy.ExtraStore.AddRange(sig.Signer.Certificates);
-            chain.Build(sig.Signer.SignerCertificate);
-            foreach (var element in chain.ChainElements)
-            {
-                AnsiConsole.Output.WriteLine("  " + element.Certificate.Subject);
-                AnsiConsole.Output.WriteLine("    Status: " + String.Join(", ", element.ChainElementStatus.Select(s => s.Status)));
-                AnsiConsole.Output.WriteLine("    Info:   " + element.Information);
-                AnsiConsole.Output.WriteLine("    SPKI:   " + element.Certificate.ComputePublicKeyIdentifier());
-            }
 
             return 0;
         }
@@ -229,6 +219,29 @@ namespace Microsoft.Framework.Signing
 
             // Success!
             return 0;
+        }
+
+        private static void DumpSigner(Signature signature, Signer signer)
+        {
+            AnsiConsole.Output.WriteLine("  [Subject]");
+            AnsiConsole.Output.WriteLine("    " + signer.Subject);
+            AnsiConsole.Output.WriteLine("  [SPKI]");
+            AnsiConsole.Output.WriteLine("    " + signer.Spki);
+            AnsiConsole.Output.WriteLine("  [Issuer]");
+            AnsiConsole.Output.WriteLine("    " + signer.SignerCertificate.Issuer);
+            AnsiConsole.Output.WriteLine("  [Signing Time]");
+            AnsiConsole.Output.WriteLine("    " + (signer.SigningTime?.ToString("O")) ?? "UNKNOWN!");
+            AnsiConsole.Output.WriteLine("  [Cert Chain]");
+            var chain = new X509Chain();
+            chain.ChainPolicy.ExtraStore.AddRange(signature.Certificates);
+            chain.Build(signer.SignerCertificate);
+            foreach (var element in chain.ChainElements)
+            {
+                AnsiConsole.Output.WriteLine("    " + element.Certificate.Subject);
+                AnsiConsole.Output.WriteLine("      Status: " + String.Join(", ", element.ChainElementStatus.Select(s => s.Status)));
+                AnsiConsole.Output.WriteLine("      Info:   " + element.Information);
+                AnsiConsole.Output.WriteLine("      SPKI:   " + element.Certificate.ComputePublicKeyIdentifier());
+            }
         }
     }
 }

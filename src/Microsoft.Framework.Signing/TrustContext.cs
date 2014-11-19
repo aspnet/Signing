@@ -13,16 +13,24 @@ namespace Microsoft.Framework.Signing
 
         public virtual TrustResult IsTrusted(Signature signature)
         {
-            return IsTrusted(signature.Signer);
+            return IsTrusted(signature.Signer, signature.Certificates);
         }
 
         public virtual TrustResult IsTrusted(Signer signer)
+        {
+            return IsTrusted(signer, includedCertificates: null);
+        }
+
+        public virtual TrustResult IsTrusted(Signer signer, X509Certificate2Collection includedCertificates)
         {
             // Build the chain
             var chain = new X509Chain();
             chain.ChainPolicy.VerificationFlags |= X509VerificationFlags.IgnoreEndRevocationUnknown;
             chain.ChainPolicy.ExtraStore.AddRange(AdditionalTrustedRoots);
-            chain.ChainPolicy.ExtraStore.AddRange(signer.Certificates);
+            if (includedCertificates != null)
+            {
+                chain.ChainPolicy.ExtraStore.AddRange(includedCertificates);
+            }
 
             // Build the chain
             var rootTrusted = chain.Build(signer.SignerCertificate);

@@ -39,13 +39,25 @@ namespace Microsoft.Framework.Signing
         /// </remarks>
         public DateTime? TimestampUtc { get; private set; }
 
+        /// <summary>
+        /// Gets a list of certificates provided as part of the signature
+        /// </summary>
+        public X509Certificate2Collection Certificates { get; private set; }
+
         private Signature(SignedCms signedCms)
         {
             _signedCms = signedCms;
 
+            Certificates = _signedCms.Certificates;
+
             // Read the signer
             var signerInfo = _signedCms.SignerInfos.Cast<SignerInfo>().FirstOrDefault();
-            Signer = Signer.FromSignerInfo(signerInfo, _signedCms.Certificates);
+            Signer = Signer.FromSignerInfo(signerInfo);
+
+            CounterSigners = signerInfo
+                .CounterSignerInfos
+                .Cast<SignerInfo>()
+                .Select(Signer.FromSignerInfo);
         }
 
         /// <summary>
@@ -234,6 +246,13 @@ namespace Microsoft.Framework.Signing
                     signer.Certificates.Add(element.Certificate);
                 }
             }
+
+            // Add a signing time attribute
+            var signingTime = new Pkcs9SigningTime(DateTime.UtcNow);
+            signer.SignedAttributes.Add(
+                new CryptographicAttributeObject(
+                    signingTime.Oid,
+                    new AsnEncodedDataCollection(signingTime)));
 
             // Compute the signature!
             signedCms.ComputeSignature(signer, silent: true);
