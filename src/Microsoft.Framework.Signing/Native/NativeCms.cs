@@ -3,7 +3,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-namespace PackageSigning.Native
+namespace Microsoft.Framework.Signing.Native
 {
     internal class NativeCms : IDisposable
     {

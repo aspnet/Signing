@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace PackageSigning.Native
+namespace Microsoft.Framework.Signing.Native
 {
     internal static class NativeMethods
     {

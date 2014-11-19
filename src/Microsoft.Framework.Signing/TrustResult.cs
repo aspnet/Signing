@@ -1,7 +1,7 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
 
-namespace PackageSigning
+namespace Microsoft.Framework.Signing
 {
     public class TrustResult
     {

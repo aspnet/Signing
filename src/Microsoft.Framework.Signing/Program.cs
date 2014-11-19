@@ -5,9 +5,9 @@ using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.Framework.Runtime.Common.CommandLine;
-using PackageSigning.Native;
+using Microsoft.Framework.Signing.Native;
 
-namespace PackageSigning
+namespace Microsoft.Framework.Signing
 {
     public class Program
     {

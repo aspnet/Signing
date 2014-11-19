@@ -9,7 +9,7 @@ using System.Text;
 using System.Security.Cryptography.Pkcs;
 using System.Collections.Generic;
 
-namespace PackageSigning
+namespace Microsoft.Framework.Signing
 {
     public class Signature
     {

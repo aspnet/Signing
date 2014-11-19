@@ -2,7 +2,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace PackageSigning
+namespace Microsoft.Framework.Signing
 {
     internal static class PemFormatter
     {

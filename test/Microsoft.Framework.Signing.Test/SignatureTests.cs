@@ -7,7 +7,7 @@ using System.Text;
 using Xunit;
 using System.Threading.Tasks;
 
-namespace PackageSigning.Test
+namespace Microsoft.Framework.Signing.Test
 {
     public class SignatureTests
     {

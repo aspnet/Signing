@@ -3,7 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 
-namespace PackageSigning
+namespace Microsoft.Framework.Signing
 {
     public class TrustContext
     {
