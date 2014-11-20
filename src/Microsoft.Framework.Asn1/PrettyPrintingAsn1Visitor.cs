@@ -8,7 +8,6 @@ namespace Microsoft.Framework.Asn1
     {
         private TextWriter _output;
         private bool _ansi;
-        private int? _explicitTag = null;
 
         public int UnknownNodesEncountered { get; private set; }
 
@@ -79,12 +78,24 @@ namespace Microsoft.Framework.Asn1
             _output.WriteLine(line);
         }
 
-        public override void Visit(Asn1ExplicitTag value)
+        public override void Visit(Asn1TaggedPrimitive value)
         {
-            var oldTag = _explicitTag;
-            _explicitTag = value.Tag;
-            value.Value.Accept(this);
-            _explicitTag = oldTag;
+            StringBuilder line = new StringBuilder();
+            BuildCommonPrefix(value, line);
+
+            line.Append("UNKNOWN PRIMITIVE\t" + value.RawValue.Length.ToString() + " bytes long");
+            _output.WriteLine(line);
+        }
+
+        public override void Visit(Asn1TaggedConstructed value)
+        {
+            StringBuilder line = new StringBuilder();
+            BuildCommonPrefix(value, line);
+
+            line.Append("UNKNOWN CONSTRUCTED");
+            _output.WriteLine(line);
+
+            VisitSubValues(value.Values);
         }
 
         public override void Visit(Asn1Null value)
@@ -134,21 +145,14 @@ namespace Microsoft.Framework.Asn1
             line.Append("  [" + Depth.ToString("00") + "]");
             line.Append(" (");
 
-            // The longest possible string is 'Application', 11 chars long
-            //  ContextSpecific is never written here because Explicit Tag nodes don't get their own line.
-            line.Append(value.Class.ToString().PadLeft(11, ' ')); 
+            // The longest possible string is 'ContextSpecific', 15 chars long
+            line.Append(value.Class.ToString().PadLeft(15, ' ')); 
 
             line.Append(":");
             line.Append(value.Tag.ToString("00"));
             line.Append(") ");
             line.Append(" ");
             line.Append(new string(' ', (Depth + 1)));
-            line.Append(" ");
-            if (_explicitTag.HasValue)
-            {
-                line.Append("[" + _explicitTag.Value + "] ");
-                _explicitTag = null;
-            }
         }
     }
 }

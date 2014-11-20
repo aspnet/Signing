@@ -144,15 +144,16 @@ namespace Microsoft.Framework.Asn1.Test
             // Arrange
             // [(depth).(index)]
             var data = new byte[] {
-                0x8F, // [0.0] Class: Context-Specific, Tag: 15
+                0xAF, // [0.0] Class: Context-Specific, Tag: 15
                 0x03,  // [0.0] Length of inner BER encoding
                 0x06, // [1.0] Class: Universal, Tag: OID
                 0x01, // [1.0] Length: 1 octet
                 0x2A, // [1.0] Value: 1.2
             };
-            var expected = new Asn1ExplicitTag(
+            var expected = new Asn1TaggedConstructed(
+                @class: Asn1Class.ContextSpecific,
                 tag: 15,
-                value: new Asn1Oid(1, 2));
+                values: new[] { new Asn1Oid(1, 2) });
 
             // Act
             var actual = ParseValue(data);

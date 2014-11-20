@@ -12,6 +12,67 @@ namespace Microsoft.Framework.Asn1
 
         public virtual void Visit(Asn1Unknown value)
         {
+            Visit((Asn1Value)value);
+        }
+
+        public virtual void Visit(Asn1Oid value)
+        {
+            Visit((Asn1Value)value);
+        }
+
+        public virtual void Visit(Asn1Integer value)
+        {
+            Visit((Asn1Value)value);
+        }
+
+        public virtual void Visit(Asn1Null value)
+        {
+            Visit((Asn1Value)value);
+        }
+
+        public virtual void Visit(Asn1OctetString value)
+        {
+            Visit((Asn1Value)value);
+        }
+
+        public virtual void Visit(Asn1UtcTime value)
+        {
+            Visit((Asn1Value)value);
+        }
+
+        public virtual void Visit(Asn1String value)
+        {
+            Visit((Asn1Value)value);
+        }
+
+        public virtual void Visit(Asn1SequenceBase value)
+        {
+            Visit((Asn1Value)value);
+        }
+
+        public virtual void Visit(Asn1BitString value)
+        {
+            Visit((Asn1Value)value);
+        }
+
+        public virtual void Visit(Asn1Boolean value)
+        {
+            Visit((Asn1Value)value);
+        }
+
+        public virtual void Visit(Asn1Tagged value)
+        {
+            Visit((Asn1Value)value);
+        }
+
+        public virtual void Visit(Asn1TaggedConstructed value)
+        {
+            Visit((Asn1Tagged)value);
+        }
+
+        public virtual void Visit(Asn1TaggedPrimitive value)
+        {
+            Visit((Asn1Tagged)value);
         }
 
         public virtual void Visit(Asn1Sequence value)
@@ -19,49 +80,9 @@ namespace Microsoft.Framework.Asn1
             Visit((Asn1SequenceBase)value);
         }
 
-        public virtual void Visit(Asn1Oid value)
-        {
-        }
-
-        public virtual void Visit(Asn1ExplicitTag value)
-        {
-        }
-
-        public virtual void Visit(Asn1Integer value)
-        {
-        }
-
-        public virtual void Visit(Asn1Null value)
-        {
-        }
-
-        public virtual void Visit(Asn1OctetString value)
-        {
-        }
-
-        public virtual void Visit(Asn1UtcTime value)
-        {
-        }
-
-        public virtual void Visit(Asn1String value)
-        {
-        }
-
         public virtual void Visit(Asn1Set value)
         {
             Visit((Asn1SequenceBase)value);
-        }
-
-        public virtual void Visit(Asn1SequenceBase value)
-        {
-        }
-
-        public virtual void Visit(Asn1BitString value)
-        {
-        }
-
-        public virtual void Visit(Asn1Boolean value)
-        {
         }
 
         protected void VisitSubValue(Asn1Value value)

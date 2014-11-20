@@ -12,6 +12,7 @@ namespace Microsoft.Framework.Asn1
     public class BerParser
     {
         private BinaryReader _reader;
+        private bool _eof = false;
 
         private static readonly Dictionary<int, Subparser> _parsers = new Dictionary<int, Subparser>()
         {
@@ -50,17 +51,46 @@ namespace Microsoft.Framework.Asn1
             _reader = reader;
         }
 
+        /// <summary>
+        /// Reinterprets the specified tagged value as the provided type of ASN.1 value
+        /// </summary>
+        /// <typeparam name="T">The type of ASN.1 value to reinterpret the provided value as</typeparam>
+        /// <param name="tagged">The explicitly tagged value</param>
+        /// <returns>A reinterpreted version of the node</returns>
+        public virtual T Reinterpret<T>(Asn1Tagged tagged) where T : Asn1Value
+        {
+            throw new NotImplementedException();
+        }
+
         public virtual Asn1Value ReadValue()
         {
+            if (_eof || _reader.BaseStream.Position >= _reader.BaseStream.Length)
+            {
+                // End-of-stream!
+                _eof = true;
+                return null;
+            }
+
             // Read the tag
             var header = ReadHeader();
 
             if (header.Class == Asn1Class.ContextSpecific)
             {
-                var inner = ReadValue();
-                return new Asn1ExplicitTag(
-                    header.Tag,
-                    inner);
+                if (header.Constructed)
+                {
+                    var innerValues = ReadInnerValues(header);
+                    return new Asn1TaggedConstructed(
+                        header.Class,
+                        header.Tag,
+                        innerValues);
+                }
+                else
+                {
+                    return new Asn1TaggedPrimitive(
+                        header.Class,
+                        header.Tag,
+                        _reader.ReadBytes(header.Length));
+                }
             }
 
             Subparser subparser;
@@ -71,6 +101,25 @@ namespace Microsoft.Framework.Asn1
 
             // Unknown tag, but we do have enough to read this node and move on, so do that.
             return ParseUnknown(header);
+        }
+
+        private IEnumerable<Asn1Value> ReadInnerValues(BerHeader header)
+        {
+            // Read the inner data
+            byte[] inner = _reader.ReadBytes(header.Length);
+
+            // Load a memory stream with it and read the values
+            List<Asn1Value> values = new List<Asn1Value>();
+            using (var strm = new MemoryStream(inner))
+            {
+                var parser = new BerParser(strm);
+                Asn1Value value;
+                while ((value = parser.ReadValue()) != null)
+                {
+                    values.Add(value);
+                }
+            }
+            return values;
         }
 
         private Asn1String ParseString(BerHeader header, Asn1StringType type)
@@ -130,12 +179,7 @@ namespace Microsoft.Framework.Asn1
 
         private Asn1SequenceBase ParseSequenceOrSet(BerHeader header, bool isSet)
         {
-            long start = _reader.BaseStream.Position;
-            List<Asn1Value> values = new List<Asn1Value>();
-            while ((_reader.BaseStream.Position - start) < header.Length)
-            {
-                values.Add(ReadValue());
-            }
+            var values = ReadInnerValues(header);
             return Asn1SequenceBase.Create(header.Class, header.Tag, values, isSet);
         }
 
