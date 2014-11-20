@@ -127,8 +127,10 @@ Once a certificate is available, the request can be signed.
 ```
 > kpm sign EntityFramework.5.0.0.nupkg.sigreq --no-timestamp
 ```
-(`--no-timestamp`: See below. This is for illustrative purposes, it is rare 
-someone would actually use this option)
+(`--no-timestamp`: By default, we timestamp and sign in a single command,
+but if the user does not wish to do so, they can use this setting. This
+may be valuable when the signature is generated on a machine without an internet
+connection.)
 
 The user will be prompted to select certificates for signing, or can provide
 them in arguments to the command. A signature is outputted to
@@ -161,8 +163,6 @@ execution of `kpm sign`.
 ```
 > kpm sign EntityFramework.5.0.0.nupkg
 ```
-
-If the user
 
 ## PEM Formatting
 PEM formatting is the format used by OpenSSL for encoding ASN.1 data (which is 
