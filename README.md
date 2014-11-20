@@ -1,12 +1,29 @@
-# Commands, Workflows and Formats
+# Package Signing
+
+## A note on the current state
+This repo is ready to test out the following scenarios:
+* `sign`
+* `timestamp`
+* `verify` (ish)
+
+In order to run these, `cd` into the `src\Microsoft.Framework.Signing` folder and `k run`. The subcommands are
+* `k run help` - Get help
+* `k run sign` - Sign any file
+* `k run verify` - Display information about the signature for a file
+* `k run timestamp` - Timestamp a signature
+
+Note that the current signatures are NOT in the format below, the content that is signed is simply that
+of the file specified. Otherwise, they are basically the same. Next up, I'll be implementing the format below.
+
+This repo will likely be integrated into KRuntime, since the commands will be moving to `kpm`.
 
 ## Signature Format
 A NuPkg signature is an external file stored as a PEM-formatted (see below)
 CMS (https://tools.ietf.org/html/rfc5652) Signed Data message. The content of the
-message is a simple DER-encoded ASN.1 data structure containing important metadata:
+message is a simple [DER-encoded ASN.1](http://luca.ntop.org/Teaching/Appunti/asn1.html) data structure containing important metadata:
 
 ```
-SignatureFile ::= SEQUENCE {
+Signature ::= SEQUENCE {
   signatureFileVersion INTEGER      // == 1
   signatures SET OF SignatureContent
 }
@@ -18,10 +35,9 @@ SignatureContent ::= SEQUENCE {
   digest OCTET STRING               // Raw bytes of the digest
 }
 ```
-***REVIEW***: Any other content to put in the signature file? Is this superfluous? Should we just
-store the digest algorithm and digest? I used ASN.1 because the CMS itself is an ASN.1 document,
-we could just use a JSON/XML/whatever blob, and store that in a simple ASN.1 String or OctetString
-but it seemed useful to preserve the same format as the wrapping file.
+
+The `digest` and `digestAlgorithm` values store the digest of the file being signed as well as
+the Object Identifier (OID) describing the algorithm used to create the digest.
 
 The message is then signed and the Encrypted Digest of the above data structure,
 is stored along with the signature algorithm identifier, all using the standard
@@ -29,28 +45,22 @@ CMS format.
 
 The `contentIdentifier` field identifies the content being signed. It is not a
 file name, but is designed to allow for identification of individual content
-being signed in the case of multiple items. When signing a NuGet Package, the
-`contentIdentifier` is formatted as follows:
+being signed in the case of multiple items. When signing a file stored alongside the
+signature, the `contentIdentifier` is simply the file name of the file being signed, with
+no path metadata. For example: `EntityFramework.5.0.0.nupkg`.
 
-1. Normalize the Version to a 4-part form, where missing digits are set to 0
-and the pre-release tag is present. Lowercase the entire string.
-1. Normalize the ID by converting all characters to their culture-invariant
-lowercase value
-1. Format the string as follows "Id@Version" where Id and Version are the canonicalized
-Id and Version from above.
-
-NOTE: It is not absolutely essential that this be canonicalized, since it does
-not need to be constructed to verify the signature, it can simply be read from
-the signature file and then hashed to verify against the signature. The individual
-members of the structure can be verified separately. Still, it seems useful to
-create a well-defined format for identifying a NuGet Package
-
-Why `SET OF` and `contentIdentifier`? I think it is valuable to make some concession
-to future-proofing here by allowing a future signature format to include multiple
-signed files in a single signature file (such as for embedding in a nupkg). If
-the `signatureFileVersion` is set to 1 (the only version right now), the consumer
-MUST only consider the first `SignatureContent`. Adding a second covered file
+Why `SET OF` (i.e. more than one) and `contentIdentifier` instead of just dumping a
+digest when we're only expecting to sign a single file? I think it is valuable
+to make some concession to future-proofing here by allowing a future version of this format
+to include multiple signed files in a single signature file (such as for embedding in 
+a nupkg). If the `signatureFileVersion` is set to 1 (the only version right now), the 
+consumer MUST only consider the first `SignatureContent`. Adding additional covered files
 to the signature is NOT permitted in version 1.
+
+***REVIEW***: Any other content to put in the signature file? Is this superfluous? Should we just
+store the digest algorithm and digest? I used ASN.1 because the CMS itself is an ASN.1 document,
+we could just use a JSON/XML/whatever blob, and store that in a simple ASN.1 String or OctetString
+but it seemed useful to preserve the same format as the wrapping file.
 
 ## Countersignatures and Timestamps
 Countersignatures are attached using the PKCS#9 Countersignature Attribute
@@ -80,8 +90,8 @@ is created as follows
 > kpm sigreq EntityFramework.5.0.0.nupkg
 ```
 
-The result is a file `EntityFramework.5.0.0.nupkg.sigreq` containing the PEM-encoded,
-incomplete CMS document
+The result is a file `EntityFramework.5.0.0.nupkg.sigreq` containing the PEM-encoded
+content described above (the ASN.1 "Signature" object above)
 
 ### Generating certificates
 In order to sign a request, a certificate is required. There will be a command
@@ -115,8 +125,10 @@ will be prompted for it.
 Once a certificate is available, the request can be signed.
 
 ```
-> kpm sign EntityFramework.5.0.0.nupkg.sigreq
+> kpm sign EntityFramework.5.0.0.nupkg.sigreq --no-timestamp
 ```
+(`--no-timestamp`: See below. This is for illustrative purposes, it is rare 
+someone would actually use this option)
 
 The user will be prompted to select certificates for signing, or can provide
 them in arguments to the command. A signature is outputted to
@@ -136,25 +148,33 @@ authority of the users choice:
 ```
 
 The signature file will be modified with countersignature asserting the
-signing time.
+signing time. It is likely we will provide a default list of timestamping
+servers and use a `Task.WhenAny` approach to fire off a bunch of timestamp
+requests and take which ever one returns first. However, the user should
+always be able to specify a specific server AND modify the machine/user-level
+list of timestamp authorities used by default.
 
 ### Sign and Timestamp in one command
 The request generation, signing and timestamping can all be executed in a single
-execution of `kpm sign` as follows:
+execution of `kpm sign`.
 
 ```
-> kpm sign EntityFramework.5.0.0.nupkg --timestamp-url http://timestamp.digicert.com
+> kpm sign EntityFramework.5.0.0.nupkg
 ```
+
+If the user
 
 ## PEM Formatting
-PEM formatting is the format used by OpenSSL for encoding ASN.1 data (which is how most
-cryptography-related data is formatted). It consists of an ASCII header and footer, followed by
-the DER-encoded ASN.1 data written as a Base64 string. A line break is inserted every 64 characters.
+PEM formatting is the format used by OpenSSL for encoding ASN.1 data (which is 
+how most cryptography-related data is formatted). It consists of an ASCII header
+and footer, followed by the DER-encoded ASN.1 data written as a Base64 string.
+A line break is inserted every 64 characters.
 
-The header and footer are lines of the format: "-----BEGIN THING-----"/"-----END THING-----" (where "THING"
-describes the entity serialized within).
+The header and footer are lines of the format: 
+"-----BEGIN THING-----"/"-----END THING-----" 
+(where "THING" describes the entity serialized within).
 
-For example, the following is the PEM encoding of the github.com certificate:
+For example, the following is the PEM encoding of the github.com SSL certificate:
 
 ```
 	-----BEGIN CERTIFICATE-----
