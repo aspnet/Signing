@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace Microsoft.Framework.Signing
 {
-    internal static class PemFormatter
+    public static class PemFormatter
     {
         public static byte[] Format(byte[] rawData, string header = null, string footer = null)
         {

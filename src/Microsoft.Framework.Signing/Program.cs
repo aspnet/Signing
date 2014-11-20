@@ -25,13 +25,14 @@ namespace Microsoft.Framework.Signing
 
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.HelpOption("-h|--help");
-            app.Command("timestamp", timestamp =>
+            app.Command("extractcontent", extractContent =>
             {
-                timestamp.Description = "Timestamps an existing signature";
-                var signature = timestamp.Argument("signature", "the path to the signature file");
-                var authority = timestamp.Argument("url", "the path to a Authenticode trusted timestamping authority");
-                timestamp.OnExecute(() => Timestamp(signature.Value, authority.Value));
-            }, addHelpCommand: false);
+                extractContent.Description = "Extracts the content of a CMS-formatted signature into the specified file";
+                var isPem = extractContent.Option("-pem", "if present, the file will be interpreted as PEM-formatted, otherwise it will be interpreted as DER-formatted", CommandOptionType.NoValue);
+                var signature = extractContent.Argument("signature", "the signature file to extract from");
+                var destination = extractContent.Argument("destination", "the file name to write the content to");
+                extractContent.OnExecute(() => DumpCms.ExtractContent(isPem.HasValue(), signature.Value, destination.Value));
+            });
             app.Command("sign", sign =>
             {
                 sign.Description = "Signs a file";

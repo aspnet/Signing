@@ -10,9 +10,9 @@
     <AspNetConfiguration>Debug</AspNetConfiguration>
     <SolutionDir>C:\Code\Git\K\CodeSigning\</SolutionDir>
     <SolutionExt>.sln</SolutionExt>
-    <SolutionFileName>CodeSigning.sln</SolutionFileName>
-    <SolutionName>CodeSigning</SolutionName>
-    <SolutionPath>C:\Code\Git\K\CodeSigning\CodeSigning.sln</SolutionPath>
+    <SolutionFileName>Signing.sln</SolutionFileName>
+    <SolutionName>Signing</SolutionName>
+    <SolutionPath>C:\Code\Git\K\CodeSigning\Signing.sln</SolutionPath>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <CurrentSolutionConfigurationContents>
       <SolutionConfiguration xmlns="">
