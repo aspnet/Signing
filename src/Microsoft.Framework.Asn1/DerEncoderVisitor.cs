@@ -76,15 +76,7 @@ namespace Microsoft.Framework.Asn1
                 Writer.Write(octet);
 
                 // Generate the list of digits in reverse order
-                List<byte> digits = new List<byte>();
-                do
-                {
-                    var digit = tag % 128;
-                    tag = tag / 128;
-
-                    // Insert at the front so we "unreverse" the digits as we calculate them
-                    digits.Insert(0, (byte)digit);
-                } while (tag > 128);
+                var digits = GenerateBaseNDigits(tag, @base: 128);
 
                 if (digits.Count == 0)
                 {
@@ -93,17 +85,14 @@ namespace Microsoft.Framework.Asn1
                 }
                 else
                 {
-                    // Write the first digit (which is what is left in tag) with bit 8 set to 1
-                    Writer.Write((byte)((tag & 0x7F) + 0x80));
-
                     // Write all but the last digit with bit 8 set to 1
                     if (digits.Count > 1)
                     {
                         Writer.Write(digits.Take(digits.Count - 1).Select(d => (byte)((d & 0x7F) + 0x80)).ToArray());
                     }
-
+                    
                     // Write the last digit with bit 8 set to 0
-                    Writer.Write((byte)(digits[digits.Count - 1] & 0x7F));
+                    Writer.Write((byte)(digits.Last() & 0x7F));
                 }
             }
             else
@@ -119,6 +108,21 @@ namespace Microsoft.Framework.Asn1
             }
         }
 
+        private static List<byte> GenerateBaseNDigits(int value, int @base)
+        {
+            List<byte> digits = new List<byte>();
+            do
+            {
+                var digit = value % @base;
+                value = value / @base;
+
+                // Insert at the front so we "unreverse" the digits as we calculate them
+                digits.Insert(0, (byte)digit);
+            } while (value > @base);
+            digits.Add((byte)value);
+            return digits;
+        }
+
         private void WriteLength(int length)
         {
             // DER encoding requires that we use the most compact form possible.
@@ -130,7 +134,21 @@ namespace Microsoft.Framework.Asn1
             }
             else
             {
-                throw new NotImplementedException("Long-form length");
+                var digits = GenerateBaseNDigits(length, @base: 256);
+
+                if (digits.Count > 127)
+                {
+                    throw new InvalidOperationException("Length too long for definite form!");
+                }
+
+                // Write the number of digits with bit 8 set to 1
+                Writer.Write((byte)((digits.Count & 0x7F) | 0x80));
+
+                // Write the digits
+                foreach (var digit in digits)
+                {
+                    Writer.Write(digit);
+                }
             }
         }
 

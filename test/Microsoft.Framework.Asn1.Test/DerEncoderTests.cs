@@ -8,7 +8,7 @@ namespace Microsoft.Framework.Asn1.Test
     public class DerEncoderTests
     {
         [Fact]
-        public void WriterCanWriteLowTagHeader()
+        public void WriterCanWriteLowTagHeaderAndShortFormLength()
         {
             // Arrange
             byte[] data = new byte[0x0A];
@@ -24,7 +24,7 @@ namespace Microsoft.Framework.Asn1.Test
         }
 
         [Fact]
-        public void WriterCanWriteHighTagHeader()
+        public void WriterCanWriteHighTagHeaderAndShortFormLength()
         {
             // Arrange
             byte[] data = new byte[0x0A];
@@ -38,6 +38,27 @@ namespace Microsoft.Framework.Asn1.Test
                 0x88, // First digit is 8 (bits 1-7 = 0x8), there are additional digits (bit 8 = 1)
                 0x0B, // Second digit is B (bits 1-7 = 0xB), there are no additional digits (bit 8 = 0)
                 0x0A  // Length = 0x0A
+            }, data);
+
+            // Act
+            var actual = DerEncoder.Encode(val);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        public void WriterCanWriteLongFormLength()
+        {
+            // Arrange
+            byte[] data = new byte[513];
+            new Random().NextBytes(data);
+            var val = new Asn1OctetString(data);
+            var expected = WrapData(new byte[] {
+                0x04, // Class & Tag
+                0x82, // Long-form length, 2 digits
+                0x02, // First base256 length digit
+                0x01  // Second base256 length digit
             }, data);
 
             // Act
