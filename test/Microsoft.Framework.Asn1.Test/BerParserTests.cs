@@ -247,13 +247,18 @@ namespace Microsoft.Framework.Asn1.Test
 
         [Theory]
         [InlineData(new byte[] { 0x06, 0xB6, 0xC0 }, "1011011011")]
+        [InlineData(new byte[] { 0x06, 0xB6, 0xC1 }, "1011011011")]
+        [InlineData(new byte[] { 0x06, 0xB6, 0xC2 }, "1011011011")]
         [InlineData(new byte[] { 0x06, 0x6e, 0x5d, 0xc0 }, "011011100101110111")]
         [InlineData(new byte[] { 0x06, 0x6e, 0x5d, 0xe0 }, "011011100101110111")]
         public void ParseCanParseBitStrings(byte[] data, string bitstring)
         {
             // Arrange
             data = PrependHeader(data, Asn1Constants.Tags.BitString);
-            var expected = new Asn1BitString(bitstring.Select(c => c == '1'));
+
+            // Generate the bitstring
+            
+            var expected = Asn1BitString.Parse(bitstring);
 
             // Act
             var actual = ParseValue(data);

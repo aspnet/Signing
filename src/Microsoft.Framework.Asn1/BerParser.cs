@@ -213,14 +213,12 @@ namespace Microsoft.Framework.Asn1
             // Remaining octets are the bitstring
             var octets = content.Skip(1).ToArray();
 
-            // Convert to bools
-            var bits = octets.SelectMany(b => ToBools(b));
-
             // Trim out the extra octets from the end and construct the bitstring
             return new Asn1BitString(
                 header.Class,
                 header.Tag,
-                bits.Take((octets.Length * 8) - extraBits));
+                octets,
+                extraBits);
         }
 
         private Asn1Value ParseBoolean(BerHeader header)

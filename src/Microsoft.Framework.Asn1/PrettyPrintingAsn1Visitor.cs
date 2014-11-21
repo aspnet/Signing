@@ -65,7 +65,7 @@ namespace Microsoft.Framework.Asn1
             StringBuilder line = new StringBuilder();
             BuildCommonPrefix(value, line);
 
-            line.Append("BIT STRING\t" + value.Bits.Count + " bits long");
+            line.Append("BIT STRING\t" + value.BitCount + " bits long");
             _output.WriteLine(line);
         }
 
