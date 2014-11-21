@@ -47,19 +47,19 @@ namespace Microsoft.Framework.Asn1.Test
             Assert.Equal(expected, actual);
         }
 
-        [Fact]
-        public void WriterCanWriteLongFormLength()
+        [Theory]
+        [InlineData(513, new byte[] { 0x02, 0x01 })]
+        [InlineData(256, new byte[] { 0x01, 0x00 })]
+        public void WriterCanWriteLongFormLength(int length, byte[] encoded)
         {
             // Arrange
-            byte[] data = new byte[513];
+            byte[] data = new byte[length];
             new Random().NextBytes(data);
             var val = new Asn1OctetString(data);
-            var expected = Enumerable.Concat(new byte[] {
-                0x04, // Class & Tag
-                0x82, // Long-form length, 2 digits
-                0x02, // First base256 length digit
-                0x01  // Second base256 length digit
-            }, data).ToArray();
+            var expected = Enumerable.Concat(Enumerable.Concat(new byte[] {
+                0x04,                          // Class & Tag
+                (byte)(0x80 | encoded.Length), // Long-form length, 2 digits
+            }, encoded), data).ToArray();
 
             // Act
             var actual = DerEncoder.Encode(val);

@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using Microsoft.Framework.Asn1;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 using Microsoft.Framework.Signing.Native;
 
@@ -13,6 +14,13 @@ namespace Microsoft.Framework.Signing
 {
     public class Program
     {
+        private static readonly IList<string> TimestampServers = new List<string>()
+        {
+            "http://timestamp.digicert.com",
+            "http://timestamp.comodoca.com/authenticode",
+            "http://tsa.starfieldtech.com/"
+        };
+
         public void Main(string[] args)
         {
 #if NET45 || ASPNET50
@@ -25,14 +33,13 @@ namespace Microsoft.Framework.Signing
 
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.HelpOption("-h|--help");
-            app.Command("extractcontent", extractContent =>
+            app.Command("timestamp", timestamp =>
             {
-                extractContent.Description = "Extracts the content of a CMS-formatted signature into the specified file";
-                var isPem = extractContent.Option("-pem", "if present, the file will be interpreted as PEM-formatted, otherwise it will be interpreted as DER-formatted", CommandOptionType.NoValue);
-                var signature = extractContent.Argument("signature", "the signature file to extract from");
-                var destination = extractContent.Argument("destination", "the file name to write the content to");
-                extractContent.OnExecute(() => DumpCms.ExtractContent(isPem.HasValue(), signature.Value, destination.Value));
-            });
+                timestamp.Description = "Timestamps an existing signature";
+                var signature = timestamp.Argument("signature", "the path to the signature file");
+                var authority = timestamp.Argument("url", "the path to a Authenticode trusted timestamping authority");
+                timestamp.OnExecute(() => Timestamp(signature.Value, authority.Value));
+            }, addHelpCommand: false);
             app.Command("sign", sign =>
             {
                 sign.Description = "Signs a file";
@@ -76,7 +83,15 @@ namespace Microsoft.Framework.Signing
                 digest = cms.GetEncryptedDigest();
 
                 // Build the ASN.1 Timestamp Packet
-                byte[] packet = Asn1Util.CreateTimestampRequest(digest);
+                var req = new Asn1Sequence(                     //  TimeStampRequest ::= SEQUENCE {
+                    Asn1Oid.Parse("1.3.6.1.4.1.311.3.2.1"),     //      countersignatureType
+                                                                //      attributes (none)
+                    new Asn1Sequence(                           //      contentInfo ::= SEQUENCE {
+                        Asn1Oid.Parse("1.2.840.113549.1.7.1"),  //          contentType
+                        new Asn1ExplicitTag(tag: 0,             //          content
+                            value: new Asn1OctetString(digest))));
+
+                var packet = DerEncoder.Encode(req);
 
                 var client = new HttpClient();
 
@@ -91,8 +106,11 @@ namespace Microsoft.Framework.Signing
                     return -1;
                 }
 
+                var resp = await response.Content.ReadAsStringAsync();
+                AnsiConsole.Output.WriteLine("Response: HTTP " + (int)response.StatusCode + " " + response.ReasonPhrase);
+
                 // Load the result into a NativeCms
-                var respBytes = Convert.FromBase64String(await response.Content.ReadAsStringAsync());
+                var respBytes = Convert.FromBase64String(resp);
                 byte[] signerInfo;
                 IEnumerable<byte[]> certs;
                 using (var timestampCms = NativeCms.Decode(respBytes, detached: true))

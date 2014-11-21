@@ -250,7 +250,7 @@ namespace Microsoft.Framework.Asn1
         private static List<byte> GenerateBaseNDigits(long value, int @base)
         {
             List<byte> digits = new List<byte>();
-            while ((value > @base) || (value < -(@base - 1)))
+            while ((value > (@base - 1)) || (value < -(@base - 1)))
             {
                 var digit = (int)(value % @base);
                 value = value / @base;
