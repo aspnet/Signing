@@ -111,6 +111,19 @@ namespace Microsoft.Framework.Asn1.Test
             Assert.Equal(expected, actual);
         }
 
+        [Fact]
+        public void WriterCanWriteNull()
+        {
+            // Arrange
+            var val = Asn1Null.Instance;
+
+            // Act
+            var actual = DerEncoder.Encode(val);
+
+            // Assert
+            Assert.Equal(new byte[] { 0x05, 0x00 }, actual);
+        }
+
         private byte[] WrapData(byte[] expectedHeader, byte[] data)
         {
             return Enumerable.Concat(expectedHeader, data).ToArray();
