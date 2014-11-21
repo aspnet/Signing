@@ -2,11 +2,18 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace Microsoft.Framework.Asn1
 {
     internal class DerEncoderVisitor : Asn1Visitor, IDisposable
     {
+        private static readonly Dictionary<Asn1StringType, Func<string, byte[]>> _encoders = new Dictionary<Asn1StringType, Func<string, byte[]>>() {
+            { Asn1StringType.BmpString, str => Encoding.BigEndianUnicode.GetBytes(str) },
+            { Asn1StringType.UTF8String, str => Encoding.UTF8.GetBytes(str) },
+            { Asn1StringType.PrintableString, str => Encoding.ASCII.GetBytes(str) }
+        };
+
         private DerEncoderVisitorState _state;
 
         private BinaryWriter Writer { get { return _state.Writer; } }
@@ -75,6 +82,14 @@ namespace Microsoft.Framework.Asn1
             });
         }
 
+        public override void Visit(Asn1String value)
+        {
+            Write(value, () =>
+            {
+                Writer.Write(Asn1String.GetEncoding(value.Type).GetBytes(value.Value));
+            });
+        }
+
         public override void Visit(Asn1Integer value)
         {
             Write(value, value.Value.ToByteArray().Reverse().ToArray());
@@ -108,6 +123,12 @@ namespace Microsoft.Framework.Asn1
                     subvalue.Accept(this);
                 }
             });
+        }
+
+        public void Dispose()
+        {
+            _state.Dispose();
+            Writer.Dispose();
         }
 
         private byte[] WriteContents(Action act)
@@ -233,12 +254,6 @@ namespace Microsoft.Framework.Asn1
                     Writer.Write(digit);
                 }
             }
-        }
-
-        public void Dispose()
-        {
-            _state.Dispose();
-            Writer.Dispose();
         }
 
         private class DerEncoderVisitorState : IDisposable

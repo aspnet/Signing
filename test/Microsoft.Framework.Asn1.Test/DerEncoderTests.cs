@@ -163,6 +163,26 @@ namespace Microsoft.Framework.Asn1.Test
         }
 
         [Theory]
+        [InlineData(new byte[] { 0x00, 0x48, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 0x6F, 0x00, 0x2C, 0x00, 0x20, 0x00, 0x57, 0x00, 0x6F, 0x00, 0x72, 0x00, 0x6C, 0x00, 0x64, 0x00, 0x21 }, "Hello, World!", Asn1StringType.BmpString, 0x1E /* BmpString */)]
+        [InlineData(new byte[] { 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x2C, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64, 0x21 }, "Hello, World!", Asn1StringType.UTF8String, 0x0C /* UTF8String */)]
+        [InlineData(new byte[] { 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x2C, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64, 0x21 }, "Hello, World!", Asn1StringType.PrintableString, 0x13 /* PrintableString */)]
+        public void WriterCanWriteStrings(byte[] encoded, string str, Asn1StringType type, int tag)
+        {
+            // Arrange
+            var val = new Asn1String(str, type);
+            var expected = WrapData(
+                tag,
+                length: encoded.Length,
+                content: encoded);
+
+            // Act
+            var actual = DerEncoder.Encode(val);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
         [InlineData(false)]
         [InlineData(true)]
         public void WriterCanWriteSequenceAndSet(bool isSet)

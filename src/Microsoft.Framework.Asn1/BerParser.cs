@@ -3,13 +3,14 @@ using System.Linq;
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
+using System.Globalization;
+using System.Numerics;
+
+// We wouldn't have to fully-qualify these if we put the using inside the namespace, but then VS keeps wanting to put more usings inside namespaces :(
+using Subparser = System.Func<Microsoft.Framework.Asn1.BerParser, Microsoft.Framework.Asn1.BerHeader, Microsoft.Framework.Asn1.Asn1Value>;
 
 namespace Microsoft.Framework.Asn1
 {
-    using System.Globalization;
-    using System.Numerics;
-    using Subparser = Func<BerParser, BerHeader, Asn1Value>;
-
     public class BerParser
     {
         private BinaryReader _reader;
@@ -29,12 +30,6 @@ namespace Microsoft.Framework.Asn1
             { Asn1Constants.Tags.BitString, (p, h) => p.ParseBitString(h) },
             { Asn1Constants.Tags.Boolean, (p, h) => p.ParseBoolean(h) },
             { Asn1Constants.Tags.Null, (p, h) => p.ParseNull(h) }
-        };
-
-        private static readonly Dictionary<Asn1StringType, Func<byte[], string>> _decoders = new Dictionary<Asn1StringType, Func<byte[], string>>() {
-            { Asn1StringType.BmpString, DecodeBmpString },
-            { Asn1StringType.UTF8String, bytes => Encoding.UTF8.GetString(bytes) },
-            { Asn1StringType.PrintableString, bytes => Encoding.ASCII.GetString(bytes) }
         };
 
         public BerParser(byte[] input)
@@ -126,7 +121,7 @@ namespace Microsoft.Framework.Asn1
         private Asn1String ParseString(BerHeader header, Asn1StringType type)
         {
             var data = _reader.ReadBytes(header.Length);
-            return new Asn1String(_decoders[type](data), type);
+            return new Asn1String(Asn1String.GetEncoding(type).GetString(data), type);
         }
 
         private Asn1Oid ParseOid(BerHeader header)
@@ -243,30 +238,6 @@ namespace Microsoft.Framework.Asn1
                 header.Class,
                 header.Tag,
                 content);
-        }
-
-        private IEnumerable<bool> ToBools(byte b)
-        {
-            yield return (b & 0x80) != 0;
-            yield return (b & 0x40) != 0;
-            yield return (b & 0x20) != 0;
-            yield return (b & 0x10) != 0;
-            yield return (b & 0x08) != 0;
-            yield return (b & 0x04) != 0;
-            yield return (b & 0x02) != 0;
-            yield return (b & 0x01) != 0;
-        }
-
-        private static string DecodeBmpString(byte[] data)
-        {
-            // We have to swap all the pairs of bytes
-            for (int i = 0; i < data.Length; i+=2)
-            {
-                var temp = data[i + 1];
-                data[i + 1] = data[i];
-                data[i] = temp;
-            }
-            return Encoding.Unicode.GetString(data);
         }
 
         internal BerHeader ReadHeader()
