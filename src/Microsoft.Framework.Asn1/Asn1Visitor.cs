@@ -75,6 +75,11 @@ namespace Microsoft.Framework.Asn1
             Visit((Asn1SequenceBase)value);
         }
 
+        public virtual void Visit(Asn1ExplicitTag value)
+        {
+            Visit((Asn1Value)value);
+        }
+
         protected void VisitSubValue(Asn1Value value)
         {
             VisitSubValues(SingleEnumerable(value));

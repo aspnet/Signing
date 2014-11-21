@@ -57,22 +57,22 @@ namespace Microsoft.Framework.Asn1
 
         public override void Visit(Asn1Null value)
         {
-            Write(value); // No contents to write!
+            Write(value, constructed: false); // No contents to write!
         }
 
         public override void Visit(Asn1Boolean value)
         {
-            Write(value, new[] { value.Value ? (byte)0x01 : (byte)0x00 });
+            Write(value, constructed: false, content: new[] { value.Value ? (byte)0x01 : (byte)0x00 });
         }
 
         public override void Visit(Asn1OctetString value)
         {
-            Write(value, value.Value);
+            Write(value, constructed: false, content: value.Value);
         }
 
         public override void Visit(Asn1BitString value)
         {
-            Write(value, () =>
+            Write(value, constructed: false, content: () =>
             {
                 Writer.Write(value.Padding);
                 foreach (var octet in value.Bytes)
@@ -84,7 +84,7 @@ namespace Microsoft.Framework.Asn1
 
         public override void Visit(Asn1String value)
         {
-            Write(value, () =>
+            Write(value, constructed: false, content: () =>
             {
                 Writer.Write(Asn1String.GetEncoding(value.Type).GetBytes(value.Value));
             });
@@ -92,7 +92,7 @@ namespace Microsoft.Framework.Asn1
 
         public override void Visit(Asn1UtcTime value)
         {
-            Write(value, () =>
+            Write(value, constructed: false, content: () =>
             {
                 Writer.Write(
                     Encoding.ASCII.GetBytes(
@@ -102,12 +102,17 @@ namespace Microsoft.Framework.Asn1
 
         public override void Visit(Asn1Integer value)
         {
-            Write(value, value.Value.ToByteArray().Reverse().ToArray());
+            Write(value, constructed: false, content: value.Value.ToByteArray().Reverse().ToArray());
+        }
+
+        public override void Visit(Asn1ExplicitTag value)
+        {
+            Write(value, constructed: true, content: () => value.Value.Accept(this));
         }
 
         public override void Visit(Asn1Oid value)
         {
-            Write(value, () =>
+            Write(value, constructed: false, content: () =>
             {
                 // Write the first two subidentifiers of the OID
                 Writer.Write((byte)((40 * value.Subidentifiers[0]) + value.Subidentifiers[1]));
@@ -126,13 +131,17 @@ namespace Microsoft.Framework.Asn1
 
         public override void Visit(Asn1SequenceBase value)
         {
-            Write(value, () =>
-            {
-                foreach (var subvalue in value.Values)
-                {
-                    subvalue.Accept(this);
-                }
-            });
+            Write(value, value.Values);
+        }
+
+        public override void Visit(Asn1UnknownPrimitive value)
+        {
+            Write(value, constructed: false, content: value.Content);
+        }
+
+        public override void Visit(Asn1UnknownConstructed value)
+        {
+            Write(value, value.Values);
         }
 
         public void Dispose()
@@ -152,35 +161,52 @@ namespace Microsoft.Framework.Asn1
             return contents;
         }
 
-        private void WriteHeader(Asn1Value value, int length)
+        private void WriteHeader(Asn1Value value, int length, bool constructed)
         {
-            WriteTag(value.Class, value.Tag);
+            WriteTag(value.Class, value.Tag, constructed);
             WriteLength(length);
         }
 
-        private void Write(Asn1Value value, Action contentWriter)
+        private void Write(Asn1Value value, IEnumerable<Asn1Value> subvalues)
         {
-            var contents = WriteContents(contentWriter);
-            Write(value, contents);
+            Write(value, constructed: true, content: () =>
+            {
+                foreach (var subvalue in subvalues)
+                {
+                    subvalue.Accept(this);
+                }
+            });
         }
 
-        private void Write(Asn1Value value, ICollection<byte> contents = null)
+        private void Write(Asn1Value value, bool constructed, Action content)
         {
-            WriteHeader(value, contents == null ? 0 : contents.Count);
-            if (contents != null)
+            var contents = WriteContents(content);
+            Write(value, constructed, contents);
+        }
+
+        private void Write(Asn1Value value, bool constructed, ICollection<byte> content = null)
+        {
+            WriteHeader(value, content == null ? 0 : content.Count, constructed);
+            if (content != null)
             {
-                foreach (var octet in contents)
+                foreach (var octet in content)
                 {
                     Writer.Write(octet);
                 }
             }
         }
 
-        private void WriteTag(Asn1Class @class, int tag)
+        private void WriteTag(Asn1Class @class, int tag, bool constructed)
         {
             // Take the last 2 bits of the class and shift them left 6 positions, to bits 8 and 7
             // 0b0000_0011 => 0b1100_0000
             byte octet = (byte)((((byte)@class) & 0x03) << 6);
+
+            // Add in the constructed flag if necessary
+            if (constructed)
+            {
+                octet |= 0x20;
+            }
 
             // Check the format of the tag
             if (tag >= 0x1F)

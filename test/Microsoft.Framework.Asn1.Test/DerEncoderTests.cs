@@ -81,7 +81,6 @@ namespace Microsoft.Framework.Asn1.Test
             // Arrange
             var expected = WrapData(
                 tag: Asn1Constants.Tags.Integer,
-                length: bytes.Length,
                 content: bytes);
             var val = new Asn1Integer(integer);
 
@@ -100,7 +99,6 @@ namespace Microsoft.Framework.Asn1.Test
             // Arrange
             var expected = WrapData(
                 tag: Asn1Constants.Tags.BitString,
-                length: ((bitString.Length / 8) + 2),
                 content: bytes);
             var val = Asn1BitString.Parse(bitString);
 
@@ -133,7 +131,6 @@ namespace Microsoft.Framework.Asn1.Test
             var val = Asn1Oid.Parse(oid);
             var expected = WrapData(
                 tag: Asn1Constants.Tags.ObjectIdentifier,
-                length: encoded.Length,
                 content: encoded);
 
             // Act
@@ -152,7 +149,6 @@ namespace Microsoft.Framework.Asn1.Test
             var val = new Asn1Boolean(value);
             var expected = WrapData(
                 tag: Asn1Constants.Tags.Boolean,
-                length: encoded.Length,
                 content: encoded);
 
             // Act
@@ -172,7 +168,6 @@ namespace Microsoft.Framework.Asn1.Test
             var val = new Asn1String(str, type);
             var expected = WrapData(
                 tag,
-                length: encoded.Length,
                 content: encoded);
 
             // Act
@@ -190,7 +185,6 @@ namespace Microsoft.Framework.Asn1.Test
             var val = new Asn1UtcTime(DateTimeOffset.Parse(dateTimeOffset));
             var expected = WrapData(
                 tag: Asn1Constants.Tags.UtcTime,
-                length: encoded.Length,
                 content: encoded);
 
             // Act
@@ -217,8 +211,8 @@ namespace Microsoft.Framework.Asn1.Test
             // Build the expected value
             var expected = WrapData(
                 tag: (isSet ? 0x11 : 0x10),
-                length: encodedMembers.Length,
-                content: encodedMembers);
+                content: encodedMembers,
+                constructed: true);
 
             // Act
             var actual = DerEncoder.Encode(isSet ? (Asn1Value)new Asn1Set(members) : new Asn1Sequence(members));
@@ -227,12 +221,73 @@ namespace Microsoft.Framework.Asn1.Test
             Assert.Equal(expected, actual);
         }
 
-        private byte[] WrapData(int tag, int length, byte[] content)
+        [Fact]
+        public void WriterCanWriteUnknownPrimitive()
+        {
+            // Arrange
+            var val = new Asn1UnknownPrimitive(
+                Asn1Class.Private, tag: 0x1E, content: new byte[] { 0xC0, 0x01, 0xC0, 0xDE });
+            var expected = Enumerable.Concat(new byte[] {
+                0xC0 | 0x1E,    // Class: Private (0xC0), Primitive, Tag: 0x1E
+                (byte)val.Content.Length
+            }, val.Content).ToArray();
+
+            // Act
+            var actual = DerEncoder.Encode(val);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        public void WriterCanWriteUnknownConstructed()
+        {
+            // Arrange
+            var members = new Asn1Value[] {
+                    new Asn1Integer(42),
+                    new Asn1Integer(24),
+                    Asn1Null.Instance
+            };
+            var encodedMembers = DerEncoder.Encode(members);
+            var val = new Asn1UnknownConstructed(
+                Asn1Class.Private, tag: 0x1E, values: members);
+            var expected = Enumerable.Concat(new byte[] {
+                0xC0 | 0x20 | 0x1E,         // Class: Private (0xC0), Constructed (0x20), Tag: 0x1E
+                (byte)encodedMembers.Length
+            }, encodedMembers).ToArray();
+
+            // Act
+            var actual = DerEncoder.Encode(val);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        public void WriterCanWriteExplicitTaggedValue()
+        {
+            var val = new Asn1ExplicitTag(tag: 0x1E, value: new Asn1Integer(42));
+            var expected = new byte[] {
+                0x80 | 0x20 | 0x1E,                 // Class: ContextSpecific (0x80), Constructed (0x20), Tag: 0x1E
+                0x03,                               // Length
+                (byte)Asn1Constants.Tags.Integer,
+                0x01,                               //  Length
+                0x2A                                //  42 = 0x2A
+            };
+
+            // Act
+            var actual = DerEncoder.Encode(val);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        private byte[] WrapData(int tag, byte[] content, bool constructed = false)
         {
             Assert.True(tag < 31, "WrapData can only be used with tags < 31");
-            Assert.True(length <= 127, "WrapData can only be used with lengths <= 127");
+            Assert.True(content.Length <= 127, "WrapData can only be used with lengths <= 127");
             return Enumerable.Concat(
-                new byte[] { (byte)tag, (byte)length },
+                new byte[] { (byte)(tag | (constructed ? 0x20 : 0x00)), (byte)content.Length },
                 content).ToArray();
         }
     }
