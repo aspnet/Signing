@@ -92,6 +92,25 @@ namespace Microsoft.Framework.Asn1.Test
             Assert.Equal(expected, actual);
         }
 
+        [Theory]
+        [InlineData(new byte[] { 0x06, 0xB6, 0xC0 }, "1011011011")]
+        [InlineData(new byte[] { 0x06, 0x6e, 0x5d, 0xc0 }, "011011100101110111")]
+        public void WriterCanWriteBitString(byte[] bytes, string bitString)
+        {
+            // Arrange
+            var expected = WrapData(new byte[] {
+                0x03,                               // BIT STRING tag
+                (byte)((bitString.Length / 8) + 2)  // Length
+            }, bytes);
+            var val = Asn1BitString.Parse(bitString);
+
+            // Act
+            var actual = DerEncoder.Encode(val);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
         private byte[] WrapData(byte[] expectedHeader, byte[] data)
         {
             return Enumerable.Concat(expectedHeader, data).ToArray();

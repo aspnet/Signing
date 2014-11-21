@@ -12,12 +12,12 @@ namespace Microsoft.Framework.Asn1
         private string _bitString;
 
         public IReadOnlyCollection<byte> Bytes { get { return _normalizedBytes; } }
-        public int Padding { get; }
+        public byte Padding { get; }
         public int BitCount { get { return (Bytes.Count * 8) - Padding; } }
 
-        public Asn1BitString(byte[] bytes, int padding) : this(Asn1Class.Universal, Asn1Constants.Tags.BitString, bytes, padding) { }
+        public Asn1BitString(byte[] bytes, byte padding) : this(Asn1Class.Universal, Asn1Constants.Tags.BitString, bytes, padding) { }
 
-        public Asn1BitString(Asn1Class @class, int tag, byte[] bytes, int padding) : base(@class, tag)
+        public Asn1BitString(Asn1Class @class, int tag, byte[] bytes, byte padding) : base(@class, tag)
         {
             Padding = padding;
 
@@ -63,9 +63,14 @@ namespace Microsoft.Framework.Asn1
             return base.ToString() + " BIT STRING " + _bitString;
         }
 
+        public void CopyTo(byte[] destination, int startIndex)
+        {
+            _normalizedBytes.CopyTo(destination, startIndex);
+        }
+
         public static Asn1BitString Parse(string bits)
         {
-            int padding = bits.Length % 8;
+            byte padding = (byte)(8 - (bits.Length % 8));
             byte[] bytes = new byte[(bits.Length / 8) + 1];
             for (int i = 0; i < bytes.Length; i++)
             {

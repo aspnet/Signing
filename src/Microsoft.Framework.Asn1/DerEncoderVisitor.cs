@@ -50,6 +50,14 @@ namespace Microsoft.Framework.Asn1
             Write(value, value.Value);
         }
 
+        public override void Visit(Asn1BitString value)
+        {
+            var octets = new byte[value.Bytes.Count + 1];
+            octets[0] = value.Padding;
+            value.CopyTo(octets, startIndex: 1);
+            Write(value, octets);
+        }
+
         public override void Visit(Asn1Integer value)
         {
             Write(value, value.Value.ToByteArray().Reverse().ToArray());
