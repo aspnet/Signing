@@ -41,7 +41,7 @@ namespace Microsoft.Framework.Asn1
         internal static Asn1SequenceBase Create(Asn1Class @class, int tag, IEnumerable<Asn1Value> values, bool isSet)
         {
             return isSet ?
-                (Asn1SequenceBase)new Asn1Set(@class, tag, values) :
+                new Asn1Set(@class, tag, values) :
                 (Asn1SequenceBase)new Asn1Sequence(@class, tag, values);
         }
     }

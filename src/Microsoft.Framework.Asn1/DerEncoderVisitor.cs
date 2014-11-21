@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Microsoft.Framework.Asn1
 {
-    internal class DerEncoderVisitor : Asn1Visitor
+    internal class DerEncoderVisitor : Asn1Visitor, IDisposable
     {
         private DerEncoderVisitorState _state;
 
@@ -20,14 +20,27 @@ namespace Microsoft.Framework.Asn1
         {
             DerEncoderVisitorState old = _state;
             _state = new DerEncoderVisitorState();
-            return new DisposableAction(() => _state = old);
+            return new DisposableAction(() => {
+                _state.Dispose();
+                _state = old;
+            });
+        }
+
+        public static byte[] Encode(IEnumerable<Asn1Value> values)
+        {
+            using (var visitor = new DerEncoderVisitor())
+            {
+                foreach (var value in values)
+                {
+                    value.Accept(visitor);
+                }
+                return visitor.GetEncoded();
+            }
         }
 
         public static byte[] Encode(Asn1Value value)
         {
-            var visitor = new DerEncoderVisitor();
-            value.Accept(visitor);
-            return visitor.GetEncoded();
+            return Encode(new[] { value });
         }
 
         public byte[] GetEncoded()
@@ -52,10 +65,14 @@ namespace Microsoft.Framework.Asn1
 
         public override void Visit(Asn1BitString value)
         {
-            var octets = new byte[value.Bytes.Count + 1];
-            octets[0] = value.Padding;
-            value.CopyTo(octets, startIndex: 1);
-            Write(value, octets);
+            Write(value, () =>
+            {
+                Writer.Write(value.Padding);
+                foreach (var octet in value.Bytes)
+                {
+                    Writer.Write(octet);
+                }
+            });
         }
 
         public override void Visit(Asn1Integer value)
@@ -63,10 +80,57 @@ namespace Microsoft.Framework.Asn1
             Write(value, value.Value.ToByteArray().Reverse().ToArray());
         }
 
+        public override void Visit(Asn1Oid value)
+        {
+            Write(value, () =>
+            {
+                // Write the first two subidentifiers of the OID
+                Writer.Write((byte)((40 * value.Subidentifiers[0]) + value.Subidentifiers[1]));
+
+                // Now, iterate over the remaining subidentifiers
+                if (value.Subidentifiers.Count > 2)
+                {
+                    foreach (var subidentifier in value.Subidentifiers.Skip(2))
+                    {
+                        // Write the identifier as a variable-length integer
+                        WriteVariableLengthInteger(subidentifier);
+                    }
+                }
+            });
+        }
+
+        public override void Visit(Asn1SequenceBase value)
+        {
+            Write(value, () =>
+            {
+                foreach (var subvalue in value.Values)
+                {
+                    subvalue.Accept(this);
+                }
+            });
+        }
+
+        private byte[] WriteContents(Action act)
+        {
+            byte[] contents;
+            using (PushState())
+            {
+                act();
+                contents = GetEncoded();
+            }
+            return contents;
+        }
+
         private void WriteHeader(Asn1Value value, int length)
         {
             WriteTag(value.Class, value.Tag);
             WriteLength(length);
+        }
+
+        private void Write(Asn1Value value, Action contentWriter)
+        {
+            var contents = WriteContents(contentWriter);
+            Write(value, contents);
         }
 
         private void Write(Asn1Value value, ICollection<byte> contents = null)
@@ -96,30 +160,12 @@ namespace Microsoft.Framework.Asn1
                 octet += 0x1F;
                 Writer.Write(octet);
 
-                // Generate the list of digits in reverse order
-                var digits = GenerateBaseNDigits(tag, @base: 128);
-
-                if (digits.Count == 0)
-                {
-                    // Write the tag with bit 8 set to 0
-                    Writer.Write((byte)(tag & 0x7F));
-                }
-                else
-                {
-                    // Write all but the last digit with bit 8 set to 1
-                    if (digits.Count > 1)
-                    {
-                        Writer.Write(digits.Take(digits.Count - 1).Select(d => (byte)((d & 0x7F) + 0x80)).ToArray());
-                    }
-                    
-                    // Write the last digit with bit 8 set to 0
-                    Writer.Write((byte)(digits.Last() & 0x7F));
-                }
+                WriteVariableLengthInteger(tag);
             }
             else
             {
                 // Low tag format => Bits 7 and 8 are class, 6 is primative/constructed flag, 5-1 are tag
-                
+
                 // Add bits 5-1 of the tag to the octet
                 // Tag = 0x10 = 0b0001_0000, Class = 0b11 => 0b1101_0000
                 octet += (byte)(tag & 0x1F);
@@ -127,6 +173,21 @@ namespace Microsoft.Framework.Asn1
                 // Write the tag!
                 Writer.Write(octet);
             }
+        }
+
+        private void WriteVariableLengthInteger(long value)
+        {
+            // Generate the list of digits in reverse order
+            var digits = GenerateBaseNDigits(value, @base: 128);
+
+            // Write all but the last digit with bit 8 set to 1
+            if (digits.Count > 1)
+            {
+                Writer.Write(digits.Take(digits.Count - 1).Select(d => (byte)((d & 0x7F) + 0x80)).ToArray());
+            }
+
+            // Write the last digit with bit 8 set to 0
+            Writer.Write((byte)(digits.Last() & 0x7F));
         }
 
         private static List<byte> GenerateBaseNDigits(long value, int @base)
@@ -141,7 +202,7 @@ namespace Microsoft.Framework.Asn1
                 digits.Insert(0, (byte)digit);
             }
             digits.Insert(0, (byte)value);
-         
+
             return digits;
         }
 
@@ -172,6 +233,12 @@ namespace Microsoft.Framework.Asn1
                     Writer.Write(digit);
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            _state.Dispose();
+            Writer.Dispose();
         }
 
         private class DerEncoderVisitorState : IDisposable

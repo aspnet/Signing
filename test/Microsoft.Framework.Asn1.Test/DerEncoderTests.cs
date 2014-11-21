@@ -14,7 +14,7 @@ namespace Microsoft.Framework.Asn1.Test
             byte[] data = new byte[0x0A];
             new Random().NextBytes(data);
             var val = new Asn1OctetString(data);
-            var expected = WrapData(new byte[] { 0x04, 0x0A }, data);
+            var expected = Enumerable.Concat(new byte[] { 0x04, 0x0A }, data).ToArray();
 
             // Act
             var actual = DerEncoder.Encode(val);
@@ -33,12 +33,12 @@ namespace Microsoft.Framework.Asn1.Test
 
             // Tag = 1035 = 8 * 128 + 11 = (0x08 * 0x80) + 0xB
             // In Base 128 (0x80), first digit is "0x08", second digit is "0x0B"
-            var expected = WrapData(new byte[] {
+            var expected = Enumerable.Concat(new byte[] {
                 0x9F, // Class = Context-Specific, Tag is High-Tag Number Form
                 0x88, // First digit is 8 (bits 1-7 = 0x8), there are additional digits (bit 8 = 1)
                 0x0B, // Second digit is B (bits 1-7 = 0xB), there are no additional digits (bit 8 = 0)
                 0x0A  // Length = 0x0A
-            }, data);
+            }, data).ToArray();
 
             // Act
             var actual = DerEncoder.Encode(val);
@@ -54,12 +54,12 @@ namespace Microsoft.Framework.Asn1.Test
             byte[] data = new byte[513];
             new Random().NextBytes(data);
             var val = new Asn1OctetString(data);
-            var expected = WrapData(new byte[] {
+            var expected = Enumerable.Concat(new byte[] {
                 0x04, // Class & Tag
                 0x82, // Long-form length, 2 digits
                 0x02, // First base256 length digit
                 0x01  // Second base256 length digit
-            }, data);
+            }, data).ToArray();
 
             // Act
             var actual = DerEncoder.Encode(val);
@@ -79,10 +79,10 @@ namespace Microsoft.Framework.Asn1.Test
         public void WriterCanWriteInteger(byte[] bytes, long integer)
         {
             // Arrange
-            var expected = WrapData(new byte[] {
-                0x02,               // INTEGER tag
-                (byte)bytes.Length  // Length
-            }, bytes);
+            var expected = WrapData(
+                tag: Asn1Constants.Tags.Integer,
+                length: bytes.Length,
+                content: bytes);
             var val = new Asn1Integer(integer);
 
             // Act
@@ -98,10 +98,10 @@ namespace Microsoft.Framework.Asn1.Test
         public void WriterCanWriteBitString(byte[] bytes, string bitString)
         {
             // Arrange
-            var expected = WrapData(new byte[] {
-                0x03,                               // BIT STRING tag
-                (byte)((bitString.Length / 8) + 2)  // Length
-            }, bytes);
+            var expected = WrapData(
+                tag: Asn1Constants.Tags.BitString,
+                length: ((bitString.Length / 8) + 2),
+                content: bytes);
             var val = Asn1BitString.Parse(bitString);
 
             // Act
@@ -124,9 +124,78 @@ namespace Microsoft.Framework.Asn1.Test
             Assert.Equal(new byte[] { 0x05, 0x00 }, actual);
         }
 
-        private byte[] WrapData(byte[] expectedHeader, byte[] data)
+        [Theory]
+        [InlineData(new byte[] { 0x2A }, "1.2")]
+        [InlineData(new byte[] { 0x2B, 0x06, 0x01, 0x05, 0x05, 0x07, 0x03, 0x03 }, "1.3.6.1.5.5.7.3.3")]
+        public void WriterCanWriteObjectIdentifier(byte[] encoded, string oid)
         {
-            return Enumerable.Concat(expectedHeader, data).ToArray();
+            // Arrange
+            var val = Asn1Oid.Parse(oid);
+            var expected = WrapData(
+                tag: Asn1Constants.Tags.ObjectIdentifier,
+                length: encoded.Length,
+                content: encoded);
+
+            // Act
+            var actual = DerEncoder.Encode(val);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [InlineData(new byte[] { 0x01 }, true)]
+        [InlineData(new byte[] { 0x00 }, false)]
+        public void WriterCanWriteBooleans(byte[] encoded, bool value)
+        {
+            // Arrange
+            var val = new Asn1Boolean(value);
+            var expected = WrapData(
+                tag: Asn1Constants.Tags.Boolean,
+                length: encoded.Length,
+                content: encoded);
+
+            // Act
+            var actual = DerEncoder.Encode(val);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void WriterCanWriteSequenceAndSet(bool isSet)
+        {
+            // Arrange
+            // Encode the members
+            var members = new Asn1Value[] {
+                new Asn1Integer(42),
+                new Asn1Integer(24),
+                Asn1Null.Instance
+            };
+            var encodedMembers = DerEncoder.Encode(members);
+
+            // Build the expected value
+            var expected = WrapData(
+                tag: (isSet ? 0x11 : 0x10),
+                length: encodedMembers.Length,
+                content: encodedMembers);
+
+            // Act
+            var actual = DerEncoder.Encode(isSet ? (Asn1Value)new Asn1Set(members) : new Asn1Sequence(members));
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        private byte[] WrapData(int tag, int length, byte[] content)
+        {
+            Assert.True(tag < 31, "WrapData can only be used with tags < 31");
+            Assert.True(length <= 127, "WrapData can only be used with lengths <= 127");
+            return Enumerable.Concat(
+                new byte[] { (byte)tag, (byte)length },
+                content).ToArray();
         }
     }
 }

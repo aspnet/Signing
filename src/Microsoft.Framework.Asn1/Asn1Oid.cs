@@ -6,11 +6,12 @@ namespace Microsoft.Framework.Asn1
 {
     public class Asn1Oid : Asn1Value
     {
-        private int[] _segments;
+        private List<int> _segments;
+        private Lazy<string> _friendlyName;
 
         public string Oid { get; }
-        public string FriendlyName { get; }
-        public int this[int index] { get { return _segments[index]; } }
+        public string FriendlyName { get { return _friendlyName.Value; } }
+        public IReadOnlyList<int> Subidentifiers { get { return _segments.AsReadOnly(); } }
 
         public Asn1Oid(params int[] segments) : this(Asn1Class.Universal, Asn1Constants.Tags.ObjectIdentifier, segments) { }
         public Asn1Oid(IEnumerable<int> segments) : this(Asn1Class.Universal, Asn1Constants.Tags.ObjectIdentifier, segments) { }
@@ -18,10 +19,10 @@ namespace Microsoft.Framework.Asn1
         public Asn1Oid(Asn1Class @class, int tag, IEnumerable<int> segments)
             : base(@class, tag)
         {
-            _segments = segments.ToArray();
+            _segments = segments.ToList();
 
             Oid = string.Join(".", _segments.Select(s => s.ToString()));
-            FriendlyName = GetFriendlyName(Oid);
+            _friendlyName = new Lazy<string>(() => GetFriendlyName(Oid));
         }
 
         public override void Accept(Asn1Visitor visitor)

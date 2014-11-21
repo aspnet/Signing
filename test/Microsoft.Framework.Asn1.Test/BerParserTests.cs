@@ -139,7 +139,7 @@ namespace Microsoft.Framework.Asn1.Test
         }
 
         [Fact]
-        public void ParserCanParseExplicitlyTaggedValue()
+        public void ParserCanParseTaggedConstructedValue()
         {
             // Arrange
             // [(depth).(index)]

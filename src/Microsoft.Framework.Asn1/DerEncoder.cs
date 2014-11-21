@@ -9,6 +9,11 @@ namespace Microsoft.Framework.Asn1
 {
     public static class DerEncoder
     {
+        public static byte[] Encode(IEnumerable<Asn1Value> values)
+        {
+            return DerEncoderVisitor.Encode(values);
+        }
+
         public static byte[] Encode(Asn1Value value)
         {
             return DerEncoderVisitor.Encode(value);
