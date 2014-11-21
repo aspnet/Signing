@@ -68,6 +68,30 @@ namespace Microsoft.Framework.Asn1.Test
             Assert.Equal(expected, actual);
         }
 
+        [Theory]
+        [InlineData(new byte[] { 0x00 }, 0)]
+        [InlineData(new byte[] { 0x7F }, 127)]
+        [InlineData(new byte[] { 0x00, 0x80 }, 128)]
+        [InlineData(new byte[] { 0x01, 0x00 }, 256)]
+        [InlineData(new byte[] { 0x80 }, -128)]
+        [InlineData(new byte[] { 0xFF, 0x7F }, -129)]
+        [InlineData(new byte[] { 0x3A, 0x4E, 0x50, 0x70, 0xDF, 0x6C, 0x08, 0x2A }, 4201383948098209834)]
+        public void WriterCanWriteInteger(byte[] bytes, long integer)
+        {
+            // Arrange
+            var expected = WrapData(new byte[] {
+                0x02,               // INTEGER tag
+                (byte)bytes.Length  // Length
+            }, bytes);
+            var val = new Asn1Integer(integer);
+
+            // Act
+            var actual = DerEncoder.Encode(val);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
         private byte[] WrapData(byte[] expectedHeader, byte[] data)
         {
             return Enumerable.Concat(expectedHeader, data).ToArray();

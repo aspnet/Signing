@@ -1,17 +1,18 @@
 ﻿using System;
+using System.Numerics;
 
 namespace Microsoft.Framework.Asn1
 {
     public class Asn1Integer : Asn1Value
     {
-        public long Value { get; }
+        public BigInteger Value { get; }
 
-        public Asn1Integer(long value)
+        public Asn1Integer(BigInteger value)
             : this(Asn1Class.Universal, Asn1Constants.Tags.Integer, value)
         {
         }
 
-        public Asn1Integer(Asn1Class @class, int tag, long value)
+        public Asn1Integer(Asn1Class @class, int tag, BigInteger value)
             : base(@class, tag)
         {
             Value = value;

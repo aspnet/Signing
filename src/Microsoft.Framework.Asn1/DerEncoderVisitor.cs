@@ -50,13 +50,26 @@ namespace Microsoft.Framework.Asn1
             Write(value, value.Value);
         }
 
-        private void Write(Asn1Value value, byte[] contents = null)
+        public override void Visit(Asn1Integer value)
+        {
+            Write(value, value.Value.ToByteArray().Reverse().ToArray());
+        }
+
+        private void WriteHeader(Asn1Value value, int length)
         {
             WriteTag(value.Class, value.Tag);
-            WriteLength(contents == null ? 0 : contents.Length);
+            WriteLength(length);
+        }
+
+        private void Write(Asn1Value value, ICollection<byte> contents = null)
+        {
+            WriteHeader(value, contents == null ? 0 : contents.Count);
             if (contents != null)
             {
-                Writer.Write(contents);
+                foreach (var octet in contents)
+                {
+                    Writer.Write(octet);
+                }
             }
         }
 
@@ -72,7 +85,7 @@ namespace Microsoft.Framework.Asn1
                 // Write the class and a marker to indicate high-format tag
 
                 // Add 0x1F to mark the tag as high-format
-                octet += (byte)0x1F;
+                octet += 0x1F;
                 Writer.Write(octet);
 
                 // Generate the list of digits in reverse order
@@ -98,7 +111,7 @@ namespace Microsoft.Framework.Asn1
             else
             {
                 // Low tag format => Bits 7 and 8 are class, 6 is primative/constructed flag, 5-1 are tag
-
+                
                 // Add bits 5-1 of the tag to the octet
                 // Tag = 0x10 = 0b0001_0000, Class = 0b11 => 0b1101_0000
                 octet += (byte)(tag & 0x1F);
@@ -108,18 +121,19 @@ namespace Microsoft.Framework.Asn1
             }
         }
 
-        private static List<byte> GenerateBaseNDigits(int value, int @base)
+        private static List<byte> GenerateBaseNDigits(long value, int @base)
         {
             List<byte> digits = new List<byte>();
-            do
+            while ((value > @base) || (value < -(@base - 1)))
             {
-                var digit = value % @base;
+                var digit = (int)(value % @base);
                 value = value / @base;
 
                 // Insert at the front so we "unreverse" the digits as we calculate them
                 digits.Insert(0, (byte)digit);
-            } while (value > @base);
-            digits.Add((byte)value);
+            }
+            digits.Insert(0, (byte)value);
+         
             return digits;
         }
 
