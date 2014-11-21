@@ -8,7 +8,7 @@ namespace Microsoft.Framework.Signing
     {
         public static string ComputePublicKeyIdentifier(this X509Certificate2 self)
         {
-            return ComputePublicKeyIdentifier(self, Signature.DefaultHashAlgorithmName);
+            return ComputePublicKeyIdentifier(self, Signature.DefaultDigestAlgorithmName);
         }
 
         public static string ComputePublicKeyIdentifier(this X509Certificate2 self, string algorithmName)

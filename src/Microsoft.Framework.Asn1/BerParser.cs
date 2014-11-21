@@ -11,7 +11,7 @@ using Subparser = System.Func<Microsoft.Framework.Asn1.BerParser, Microsoft.Fram
 
 namespace Microsoft.Framework.Asn1
 {
-    public class BerParser
+    public class BerParser : IDisposable
     {
         private BinaryReader _reader;
 
@@ -44,6 +44,35 @@ namespace Microsoft.Framework.Asn1
         public BerParser(BinaryReader reader)
         {
             _reader = reader;
+        }
+
+        public static Asn1Value Parse(byte[] input)
+        {
+            using (var parser = new BerParser(input))
+            {
+                return parser.ReadValue();
+            }
+        }
+
+        public static Asn1Value Parse(Stream input)
+        {
+            using (var parser = new BerParser(input))
+            {
+                return parser.ReadValue();
+            }
+        }
+
+        public static Asn1Value Parse(BinaryReader input)
+        {
+            using (var parser = new BerParser(input))
+            {
+                return parser.ReadValue();
+            }
+        }
+
+        public void Dispose()
+        {
+            _reader.Dispose();
         }
 
         public virtual Asn1Value ReadValue()

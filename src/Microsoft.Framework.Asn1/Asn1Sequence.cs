@@ -7,12 +7,12 @@ namespace Microsoft.Framework.Asn1
     public abstract class Asn1SequenceBase : Asn1Value
     {
         public bool IsSet { get; }
-        public IEnumerable<Asn1Value> Values { get; }
+        public IList<Asn1Value> Values { get; }
 
         protected Asn1SequenceBase(Asn1Class @class, int tag, IEnumerable<Asn1Value> values, bool isSet)
             : base(@class, tag)
         {
-            Values = values;
+            Values = values.ToList();
             IsSet = isSet;
         }
 

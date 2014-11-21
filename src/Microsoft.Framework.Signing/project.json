@@ -10,7 +10,7 @@
     },
 
     "frameworks": {
-        "aspnet50": {
+        "net45": {
             "frameworkAssemblies": {
                 "System.Security": "",
                 "System.Net.Http": ""

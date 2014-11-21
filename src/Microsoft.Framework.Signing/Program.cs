@@ -33,13 +33,27 @@ namespace Microsoft.Framework.Signing
 
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.HelpOption("-h|--help");
-            app.Command("timestamp", timestamp =>
+            app.Command("sigreq", sigreq =>
             {
-                timestamp.Description = "Timestamps an existing signature";
-                var signature = timestamp.Argument("signature", "the path to the signature file");
-                var authority = timestamp.Argument("url", "the path to a Authenticode trusted timestamping authority");
-                timestamp.OnExecute(() => Timestamp(signature.Value, authority.Value));
+                sigreq.Description = "Creates a signing request for the specific file";
+                var fileName = sigreq.Argument(
+                    "filename", 
+                    "the name of the file to create a signature request for");
+                var outputFile = sigreq.Option(
+                    "-o|--output", 
+                    "the name of the signature request file to create (defaults to the input filename with the '.sigreq' extension added)", 
+                    CommandOptionType.SingleValue);
+                var digestAlgorithm = sigreq.Option(
+                    "-alg|--algorithm", 
+                    "the name of the digest algorithm to use", 
+                    CommandOptionType.SingleValue);
+                sigreq.OnExecute(() =>
+                    Commands.CreateSigningRequest(
+                        fileName.Value,
+                        outputFile.Value(),
+                        digestAlgorithm.Value()));
             }, addHelpCommand: false);
+
             app.Command("sign", sign =>
             {
                 sign.Description = "Signs a file";
@@ -50,15 +64,23 @@ namespace Microsoft.Framework.Signing
                 var findType = sign.Option("-ft|--findType <x509findType>", "the criteria to search on (see http://msdn.microsoft.com/en-us/library/system.security.cryptography.x509certificates.x509findtype(v=vs.110).aspx for example values)", CommandOptionType.SingleValue);
                 var outputFile = sign.Option("-o|--output <outputFile>", "the path to the signature file to output (by default, the existing file name plus '.sig' is used)", CommandOptionType.SingleValue);
                 var password = sign.Option("-p|--password <password>", "the password for the PFX file", CommandOptionType.SingleValue);
-                sign.OnExecute(() => Sign(fileName.Value, certificates.Value, outputFile.Value(), password.Value(), storeName.Value(), storeLocation.Value(), findType.Value()));
+                sign.OnExecute(() => Commands.Sign(fileName.Value, certificates.Value, outputFile.Value(), password.Value(), storeName.Value(), storeLocation.Value(), findType.Value()));
             }, addHelpCommand: false);
-            app.Command("verify", verify =>
+            app.Command("view", view =>
             {
-                verify.Description = "Verifies the signature of a file";
-                var fileName = verify.Argument("filename", "the name of the file to verify");
-                var signature = verify.Option("-s|--signature <signature>", "the path to the signature file to verify against (by default, the existing file name plus '.sig' is used)", CommandOptionType.SingleValue);
-                verify.OnExecute(() => Verify(fileName.Value, signature.Value()));
+                view.Description = "Views a signature file";
+                var fileName = view.Argument("filename", "the name of the signature file to view");
+                view.OnExecute(() => Commands.View(fileName.Value));
             }, addHelpCommand: false);
+
+            //app.Command("timestamp", timestamp =>
+            //{
+            //    timestamp.Description = "Timestamps an existing signature";
+            //    var signature = timestamp.Argument("signature", "the path to the signature file");
+            //    var authority = timestamp.Argument("url", "the path to a Authenticode trusted timestamping authority");
+            //    timestamp.OnExecute(() => Timestamp(signature.Value, authority.Value));
+            //}, addHelpCommand: false);
+            //app.Command("sign", sign =>
             app.Command("help", help =>
             {
                 help.Description = "Get help on the application, or a specific command";
@@ -70,197 +92,71 @@ namespace Microsoft.Framework.Signing
             app.Execute(args);
         }
 
-        private async Task<int> Timestamp(string signature, string authority)
-        {
-            // Open the signature and decode it
-            byte[] data = PemFormatter.Unformat(File.ReadAllBytes(signature));
+        //private async Task<int> Timestamp(string signature, string authority)
+        //{
+        //    // Open the signature and decode it
+        //    byte[] data = PemFormatter.Unformat(File.ReadAllBytes(signature));
 
-            // Load the NativeCms object
-            byte[] digest;
-            using (var cms = NativeCms.Decode(data, detached: true))
-            {
-                // Read the encrypted digest
-                digest = cms.GetEncryptedDigest();
+        //    // Load the NativeCms object
+        //    byte[] digest;
+        //    using (var cms = NativeCms.Decode(data, detached: true))
+        //    {
+        //        // Read the encrypted digest
+        //        digest = cms.GetEncryptedDigest();
 
-                // Build the ASN.1 Timestamp Packet
-                var req = new Asn1Sequence(                     //  TimeStampRequest ::= SEQUENCE {
-                    Asn1Oid.Parse("1.3.6.1.4.1.311.3.2.1"),     //      countersignatureType
-                                                                //      attributes (none)
-                    new Asn1Sequence(                           //      contentInfo ::= SEQUENCE {
-                        Asn1Oid.Parse("1.2.840.113549.1.7.1"),  //          contentType
-                        new Asn1ExplicitTag(tag: 0,             //          content
-                            value: new Asn1OctetString(digest))));
+        //        // Build the ASN.1 Timestamp Packet
+        //        var req = new Asn1Sequence(                     //  TimeStampRequest ::= SEQUENCE {
+        //            Asn1Oid.Parse("1.3.6.1.4.1.311.3.2.1"),     //      countersignatureType
+        //                                                        //      attributes (none)
+        //            new Asn1Sequence(                           //      contentInfo ::= SEQUENCE {
+        //                Asn1Oid.Parse("1.2.840.113549.1.7.1"),  //          contentType
+        //                new Asn1ExplicitTag(tag: 0,             //          content
+        //                    value: new Asn1OctetString(digest))));
 
-                var packet = DerEncoder.Encode(req);
+        //        var packet = DerEncoder.Encode(req);
 
-                var client = new HttpClient();
+        //        var client = new HttpClient();
 
-                // Timestamp it!
-                AnsiConsole.Output.WriteLine("Posting to timestamping server: " + authority);
-                var content = new StringContent(Convert.ToBase64String(packet));
-                content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                var response = await client.PostAsync(authority, content);
-                if (!response.IsSuccessStatusCode)
-                {
-                    AnsiConsole.Error.WriteLine("HTTP Error: " + response.StatusCode.ToString());
-                    return -1;
-                }
+        //        // Timestamp it!
+        //        AnsiConsole.Output.WriteLine("Posting to timestamping server: " + authority);
+        //        var content = new StringContent(Convert.ToBase64String(packet));
+        //        content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        //        var response = await client.PostAsync(authority, content);
+        //        if (!response.IsSuccessStatusCode)
+        //        {
+        //            AnsiConsole.Error.WriteLine("HTTP Error: " + response.StatusCode.ToString());
+        //            return -1;
+        //        }
 
-                var resp = await response.Content.ReadAsStringAsync();
-                AnsiConsole.Output.WriteLine("Response: HTTP " + (int)response.StatusCode + " " + response.ReasonPhrase);
+        //        var resp = await response.Content.ReadAsStringAsync();
+        //        AnsiConsole.Output.WriteLine("Response: HTTP " + (int)response.StatusCode + " " + response.ReasonPhrase);
 
-                // Load the result into a NativeCms
-                var respBytes = Convert.FromBase64String(resp);
-                byte[] signerInfo;
-                IEnumerable<byte[]> certs;
-                using (var timestampCms = NativeCms.Decode(respBytes, detached: true))
-                {
-                    // Read the signerinfo and certificates
-                    signerInfo = timestampCms.GetEncodedSignerInfo();
+        //        // Load the result into a NativeCms
+        //        var respBytes = Convert.FromBase64String(resp);
+        //        byte[] signerInfo;
+        //        IEnumerable<byte[]> certs;
+        //        using (var timestampCms = NativeCms.Decode(respBytes, detached: true))
+        //        {
+        //            // Read the signerinfo and certificates
+        //            signerInfo = timestampCms.GetEncodedSignerInfo();
 
-                    certs = timestampCms.GetCertificates();
-                }
+        //            certs = timestampCms.GetCertificates();
+        //        }
 
-                // Write the certs into the cms
-                cms.AddCertificates(certs);
+        //        // Write the certs into the cms
+        //        cms.AddCertificates(certs);
 
-                // Write the signer
-                cms.AddCountersignature(signerInfo);
+        //        // Write the signer
+        //        cms.AddCountersignature(signerInfo);
 
-                // Read the new message and dump it!
-                var encoded = cms.Encode();
-                File.WriteAllBytes(
-                    signature,
-                    PemFormatter.Format(encoded, "BEGIN SIGNATURE", "END SIGNATURE"));
-            }
+        //        // Read the new message and dump it!
+        //        var encoded = cms.Encode();
+        //        File.WriteAllBytes(
+        //            signature,
+        //            PemFormatter.Format(encoded, "BEGIN SIGNATURE", "END SIGNATURE"));
+        //    }
 
-            return 0;
-        }
-
-        private async Task<int> Verify(string fileName, string signatureFile)
-        {
-            // Default values
-            signatureFile = signatureFile ?? (fileName + ".sig");
-
-            // Verify the signature
-            var sig = await Signature.VerifyAsync(fileName, signatureFile);
-
-            // Display the signature data
-            AnsiConsole.Output.WriteLine("Signer Information:");
-            DumpSigner(sig, sig.Signer);
-
-            foreach (var counterSigner in sig.CounterSigners)
-            {
-                AnsiConsole.Output.WriteLine("");
-                AnsiConsole.Output.WriteLine("\x1b[32;1mCountersigner Information:\x1b[30;0m");
-                DumpSigner(sig, counterSigner);
-            }
-
-            // Check trust
-            var trust = new TrustContext();
-            var trustResult = trust.IsTrusted(sig);
-            AnsiConsole.Output.WriteLine("");
-            AnsiConsole.Output.WriteLine(string.Format("The file is {0}", trustResult.Trusted ? "TRUSTED" : "NOT TRUSTED"));
-            foreach (var publisher in trustResult.TrustedPublishers)
-            {
-                AnsiConsole.Output.WriteLine("  Trusted by: " + publisher.Name);
-                AnsiConsole.Output.WriteLine("    [SPKI] : " + publisher.Spki);
-            }
-
-            AnsiConsole.Output.WriteLine("");
-            AnsiConsole.Output.WriteLine("");
-
-            return 0;
-        }
-
-        private async Task<int> Sign(string fileName, string certificates, string outputFile, string password, string storeName, string storeLocation, string findType)
-        {
-            // Default values
-            outputFile = outputFile ?? (fileName + ".sig");
-            storeName = storeName ?? "My";
-            storeLocation = storeLocation ?? "CurrentUser";
-            findType = findType ?? "FindBySubjectName";
-
-            // Get the certificates
-            X509Certificate2 signingCert;
-            X509Certificate2Collection certs;
-            if (File.Exists(certificates))
-            {
-                certs = new X509Certificate2Collection();
-                certs.Import(certificates, password, X509KeyStorageFlags.DefaultKeySet);
-                if (certs.Count == 0)
-                {
-                    AnsiConsole.Error.WriteLine("Certificate file has no certificates: " + certificates);
-                    return -1;
-                }
-                signingCert = new X509Certificate2(certificates, password);
-            }
-            else
-            {
-                StoreName name;
-                if (!Enum.TryParse(storeName, ignoreCase: true, result: out name))
-                {
-                    AnsiConsole.Error.WriteLine("Unknown store name: " + storeName);
-                    return -1;
-                }
-
-                StoreLocation loc;
-                if (!Enum.TryParse(storeLocation, ignoreCase: true, result: out loc))
-                {
-                    AnsiConsole.Error.WriteLine("Unknown store location: " + storeLocation);
-                    return -1;
-                }
-
-                X509FindType find;
-                if (!Enum.TryParse(findType, ignoreCase: true, result: out find))
-                {
-                    AnsiConsole.Error.WriteLine("Unknown X509FindType: " + find);
-                    return -1;
-                }
-
-                // Find the certificate in the store
-                var store = new X509Store(name, loc);
-                store.Open(OpenFlags.ReadOnly);
-                certs = store.Certificates.Find(find, certificates, validOnly: false);
-                if (certs.Count == 0)
-                {
-                    AnsiConsole.Error.WriteLine("Unable to find certificate using provided criteria");
-                    return -1;
-                }
-                signingCert = certs[0];
-            }
-
-            // Make the signature
-            var sig = await Signature.SignAsync(fileName, signingCert, certs);
-
-            // Save the signature
-            await sig.WriteAsync(outputFile);
-
-            // Success!
-            return 0;
-        }
-
-        private static void DumpSigner(Signature signature, Signer signer)
-        {
-            AnsiConsole.Output.WriteLine("  [Subject]");
-            AnsiConsole.Output.WriteLine("    " + signer.Subject);
-            AnsiConsole.Output.WriteLine("  [SPKI]");
-            AnsiConsole.Output.WriteLine("    " + signer.Spki);
-            AnsiConsole.Output.WriteLine("  [Issuer]");
-            AnsiConsole.Output.WriteLine("    " + signer.SignerCertificate.Issuer);
-            AnsiConsole.Output.WriteLine("  [Signing Time]");
-            AnsiConsole.Output.WriteLine("    " + (signer.SigningTime?.ToString("O")) ?? "UNKNOWN!");
-            AnsiConsole.Output.WriteLine("  [Cert Chain]");
-            var chain = new X509Chain();
-            chain.ChainPolicy.ExtraStore.AddRange(signature.Certificates);
-            chain.Build(signer.SignerCertificate);
-            foreach (var element in chain.ChainElements)
-            {
-                AnsiConsole.Output.WriteLine("    " + element.Certificate.Subject);
-                AnsiConsole.Output.WriteLine("      Status: " + String.Join(", ", element.ChainElementStatus.Select(s => s.Status)));
-                AnsiConsole.Output.WriteLine("      Info:   " + element.Information);
-                AnsiConsole.Output.WriteLine("      SPKI:   " + element.Certificate.ComputePublicKeyIdentifier());
-            }
-        }
+        //    return 0;
+        //}
     }
 }
