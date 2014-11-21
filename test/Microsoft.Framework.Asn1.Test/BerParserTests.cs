@@ -139,21 +139,45 @@ namespace Microsoft.Framework.Asn1.Test
         }
 
         [Fact]
-        public void ParserCanParseTaggedConstructedValue()
+        public void ParserCanParseUnknownConstructedValue()
         {
             // Arrange
             // [(depth).(index)]
             var data = new byte[] {
-                0xAF, // [0.0] Class: Context-Specific, Tag: 15
-                0x03,  // [0.0] Length of inner BER encoding
+                0xAF, // [0.0] Class: Context-Specific, Constructed, Tag: 15
+                0x03, // [0.0] Length of inner BER encoding
                 0x06, // [1.0] Class: Universal, Tag: OID
                 0x01, // [1.0] Length: 1 octet
                 0x2A, // [1.0] Value: 1.2
             };
-            var expected = new Asn1TaggedConstructed(
+            var expected = new Asn1UnknownConstructed(
                 @class: Asn1Class.ContextSpecific,
                 tag: 15,
                 values: new[] { new Asn1Oid(1, 2) });
+
+            // Act
+            var actual = ParseValue(data);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        public void ParserCanParseUnknownPrimitiveValue()
+        {
+            // Arrange
+            var data = new byte[] {
+                0x8F, // Class: Context-Specific, Primitive, Tag: 15
+                0x04, // Length
+                0xDE, // Data
+                0xAD,
+                0xBE,
+                0xEF
+            };
+            var expected = new Asn1UnknownPrimitive(
+                @class: Asn1Class.ContextSpecific,
+                tag: 15,
+                content: new byte[] { 0xDE, 0xAD, 0xBE, 0xEF });
 
             // Act
             var actual = ParseValue(data);
@@ -257,7 +281,6 @@ namespace Microsoft.Framework.Asn1.Test
             data = PrependHeader(data, Asn1Constants.Tags.BitString);
 
             // Generate the bitstring
-            
             var expected = Asn1BitString.Parse(bitstring);
 
             // Act

@@ -10,11 +10,6 @@ namespace Microsoft.Framework.Asn1
         {
         }
 
-        public virtual void Visit(Asn1Unknown value)
-        {
-            Visit((Asn1Value)value);
-        }
-
         public virtual void Visit(Asn1Oid value)
         {
             Visit((Asn1Value)value);
@@ -60,19 +55,14 @@ namespace Microsoft.Framework.Asn1
             Visit((Asn1Value)value);
         }
 
-        public virtual void Visit(Asn1Tagged value)
+        public virtual void Visit(Asn1UnknownConstructed value)
         {
             Visit((Asn1Value)value);
         }
 
-        public virtual void Visit(Asn1TaggedConstructed value)
+        public virtual void Visit(Asn1UnknownPrimitive value)
         {
-            Visit((Asn1Tagged)value);
-        }
-
-        public virtual void Visit(Asn1TaggedPrimitive value)
-        {
-            Visit((Asn1Tagged)value);
+            Visit((Asn1Value)value);
         }
 
         public virtual void Visit(Asn1Sequence value)

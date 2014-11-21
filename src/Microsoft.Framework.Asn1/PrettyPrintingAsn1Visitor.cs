@@ -78,16 +78,16 @@ namespace Microsoft.Framework.Asn1
             _output.WriteLine(line);
         }
 
-        public override void Visit(Asn1TaggedPrimitive value)
+        public override void Visit(Asn1UnknownPrimitive value)
         {
             StringBuilder line = new StringBuilder();
             BuildCommonPrefix(value, line);
 
-            line.Append("UNKNOWN PRIMITIVE\t" + value.RawValue.Length.ToString() + " bytes long");
+            line.Append("UNKNOWN PRIMITIVE\t" + value.Content.Length.ToString() + " bytes long");
             _output.WriteLine(line);
         }
 
-        public override void Visit(Asn1TaggedConstructed value)
+        public override void Visit(Asn1UnknownConstructed value)
         {
             StringBuilder line = new StringBuilder();
             BuildCommonPrefix(value, line);
@@ -130,23 +130,13 @@ namespace Microsoft.Framework.Asn1
             _output.WriteLine(line);
         }
 
-        public override void Visit(Asn1Unknown value)
-        {
-            StringBuilder line = new StringBuilder();
-            BuildCommonPrefix(value, line);
-            line.Append("UNKNOWN!");
-            _output.WriteLine(line);
-
-            UnknownNodesEncountered++;
-        }
-
         private void BuildCommonPrefix(Asn1Value value, StringBuilder line)
         {
             line.Append("  [" + Depth.ToString("00") + "]");
             line.Append(" (");
 
             // The longest possible string is 'ContextSpecific', 15 chars long
-            line.Append(value.Class.ToString().PadLeft(15, ' ')); 
+            line.Append(value.Class.ToString().PadLeft(15, ' '));
 
             line.Append(":");
             line.Append(value.Tag.ToString("00"));

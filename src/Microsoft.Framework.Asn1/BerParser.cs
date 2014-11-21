@@ -14,7 +14,6 @@ namespace Microsoft.Framework.Asn1
     public class BerParser
     {
         private BinaryReader _reader;
-        private bool _eof = false;
 
         private static readonly Dictionary<int, Subparser> _parsers = new Dictionary<int, Subparser>()
         {
@@ -47,56 +46,45 @@ namespace Microsoft.Framework.Asn1
             _reader = reader;
         }
 
-        /// <summary>
-        /// Reinterprets the specified tagged value as the provided type of ASN.1 value
-        /// </summary>
-        /// <typeparam name="T">The type of ASN.1 value to reinterpret the provided value as</typeparam>
-        /// <param name="tagged">The explicitly tagged value</param>
-        /// <returns>A reinterpreted version of the node</returns>
-        public virtual T Reinterpret<T>(Asn1Tagged tagged) where T : Asn1Value
-        {
-            throw new NotImplementedException();
-        }
-
         public virtual Asn1Value ReadValue()
         {
-            if (_eof || _reader.BaseStream.Position >= _reader.BaseStream.Length)
+            if (_reader.BaseStream.Position >= _reader.BaseStream.Length)
             {
                 // End-of-stream!
-                _eof = true;
                 return null;
             }
 
             // Read the tag
             var header = ReadHeader();
 
-            if (header.Class == Asn1Class.ContextSpecific)
+            // If the Class of the tag is Universal, we know how the data is formatted.
+            if (header.Class == Asn1Class.Universal)
             {
-                if (header.Constructed)
+                Subparser subparser;
+                if (_parsers.TryGetValue(header.Tag, out subparser))
                 {
-                    var innerValues = ReadInnerValues(header);
-                    return new Asn1TaggedConstructed(
-                        header.Class,
-                        header.Tag,
-                        innerValues);
-                }
-                else
-                {
-                    return new Asn1TaggedPrimitive(
-                        header.Class,
-                        header.Tag,
-                        _reader.ReadBytes(header.Length));
+                    return subparser(this, header);
                 }
             }
 
-            Subparser subparser;
-            if (_parsers.TryGetValue(header.Tag, out subparser))
+            // Otherwise, if it's a Constructed value, we can parse the inner values
+            if (header.Constructed)
             {
-                return subparser(this, header);
+                var innerValues = ReadInnerValues(header);
+                return new Asn1UnknownConstructed(
+                    header.Class,
+                    header.Tag,
+                    innerValues);
             }
-
-            // Unknown tag, but we do have enough to read this node and move on, so do that.
-            return ParseUnknown(header);
+            else
+            {
+                // And if it isn't Constructed, it's Primitive and we have no clue
+                // how to parse it so just read the bytes for later reinterpreting
+                return new Asn1UnknownPrimitive(
+                    header.Class,
+                    header.Tag,
+                    _reader.ReadBytes(header.Length));
+            }
         }
 
         private IEnumerable<Asn1Value> ReadInnerValues(BerHeader header)
@@ -234,7 +222,7 @@ namespace Microsoft.Framework.Asn1
             var content = _reader.ReadBytes(header.Length);
 
             // Construct the value!
-            return new Asn1Unknown(
+            return new Asn1UnknownPrimitive(
                 header.Class,
                 header.Tag,
                 content);
