@@ -90,6 +90,16 @@ namespace Microsoft.Framework.Asn1
             });
         }
 
+        public override void Visit(Asn1UtcTime value)
+        {
+            Write(value, () =>
+            {
+                Writer.Write(
+                    Encoding.ASCII.GetBytes(
+                        value.Value.UtcDateTime.ToString("yyMMddHHmmss") + "Z"));
+            });
+        }
+
         public override void Visit(Asn1Integer value)
         {
             Write(value, value.Value.ToByteArray().Reverse().ToArray());

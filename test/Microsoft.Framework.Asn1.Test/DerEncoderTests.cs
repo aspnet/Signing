@@ -183,6 +183,24 @@ namespace Microsoft.Framework.Asn1.Test
         }
 
         [Theory]
+        [InlineData(new byte[] { 0x39, 0x31, 0x30, 0x35, 0x30, 0x36, 0x32, 0x33, 0x34, 0x35, 0x34, 0x30, 0x5a }, "1991-05-06T23:45:40Z")]
+        public void WriterCanWriteUTCTimes(byte[] encoded, string dateTimeOffset)
+        {
+            // Arrange
+            var val = new Asn1UtcTime(DateTimeOffset.Parse(dateTimeOffset));
+            var expected = WrapData(
+                tag: Asn1Constants.Tags.UtcTime,
+                length: encoded.Length,
+                content: encoded);
+
+            // Act
+            var actual = DerEncoder.Encode(val);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
         [InlineData(false)]
         [InlineData(true)]
         public void WriterCanWriteSequenceAndSet(bool isSet)
