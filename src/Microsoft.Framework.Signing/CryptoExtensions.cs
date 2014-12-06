@@ -25,5 +25,24 @@ namespace Microsoft.Framework.Signing
                 .SelectMany(ext => ext.EnhancedKeyUsages.Cast<Oid>())
                 .Any(eku => string.Equals(requiredEku.Value, eku.Value, StringComparison.OrdinalIgnoreCase));
         }
+
+        public static string CommonName(this X500DistinguishedName self)
+        {
+            return GetCommonName(self.Name);
+        }
+
+        private static string GetCommonName(string dn)
+        {
+            if (dn.StartsWith("CN="))
+            {
+                var commaIdx = dn.IndexOf(',');
+                if (commaIdx == -1)
+                {
+                    commaIdx = dn.Length;
+                }
+                return dn.Substring(3, commaIdx - 3);
+            }
+            return dn;
+        }
     }
 }

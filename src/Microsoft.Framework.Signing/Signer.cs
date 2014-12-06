@@ -14,7 +14,7 @@ namespace Microsoft.Framework.Signing
         public string Spki { get; private set; }
         public X509Certificate2 SignerCertificate { get; private set; }
         public DateTime? SigningTime { get; private set; }
-        
+
         private Signer(string subject, string spki, X509Certificate2 signerCertificate, DateTime? signingTime)
         {
             Subject = subject;

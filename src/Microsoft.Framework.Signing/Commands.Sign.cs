@@ -14,41 +14,64 @@ namespace Microsoft.Framework.Signing
         {
             var signOptions = SignOptions.FromOptions(fileName, options);
 
-            var signingCert = signOptions.FindCert();
+            X509Certificate2Collection includedCerts;
+            var signingCert = signOptions.FindCert(out includedCerts);
             if (signingCert == null)
             {
                 AnsiConsole.Error.WriteLine("Unable to find certificate that meets the specified criteria");
                 return -1;
             }
+            AnsiConsole.Output.WriteLine("Signing file with: " + signingCert.SubjectName.CommonName());
+
+            // Load the private key if provided
+            if (!string.IsNullOrEmpty(signOptions.CspName) && !string.IsNullOrEmpty(signOptions.KeyContainer))
+            {
+                var parameters = new CspParameters()
+                {
+                    ProviderType = 1, // PROV_RSA_FULL
+                    KeyNumber = (int)KeyNumber.Signature,
+                    ProviderName = signOptions.CspName,
+                    KeyContainerName = signOptions.KeyContainer
+                };
+                signingCert.PrivateKey = new RSACryptoServiceProvider(parameters);
+            }
+
             if (!signingCert.HasPrivateKey)
             {
-                AnsiConsole.Error.WriteLine("Unable to find private key for certificate: " + signingCert.Subject);
+                AnsiConsole.Error.WriteLine("Unable to find private key for certificate: " + signingCert.SubjectName.CommonName());
                 return -1;
             }
 
-            AnsiConsole.Output.WriteLine("Signing file with: " + signingCert.Subject);
+            // If the input file didn't provide any additional certs, set up a new collection
+            var additionalCerts = new X509Certificate2Collection();
 
-            //// Determine if we are signing a request or a file
-            //Signature sig = await Signature.TryDecodeAsync(fileName);
-            //if (sig == null)
-            //{
-            //    sig = new Signature(SignaturePayload.Compute(fileName, Signature.DefaultDigestAlgorithmName));
-            //}
+            // Load any additional certs requested by the user
+            if (!string.IsNullOrEmpty(signOptions.AddCertificatesFile))
+            {
+                additionalCerts.Import(signOptions.AddCertificatesFile);
+            }
 
-            //// Verify that the content is unsigned
-            //if (sig.IsSigned)
-            //{
-            //    AnsiConsole.Error.WriteLine("File already signed: " + fileName);
-            //    return -1;
-            //}
+            // Determine if we are signing a request or a file
+            Signature sig = await Signature.TryDecodeAsync(fileName);
+            if (sig == null)
+            {
+                sig = new Signature(SignaturePayload.Compute(fileName, Signature.DefaultDigestAlgorithmName));
+            }
 
-            //// Sign the file
-            //sig.Sign(signingCert, certs);
+            // Verify that the content is unsigned
+            if (sig.IsSigned)
+            {
+                AnsiConsole.Error.WriteLine("File already signed: " + fileName);
+                return -1;
+            }
 
-            //// Write the signature
-            //await sig.WriteAsync(outputFile);
+            // Sign the file
+            sig.Sign(signingCert, includedCerts, additionalCerts);
 
-            //AnsiConsole.Output.WriteLine("Successfully signed.");
+            // Write the signature
+            await sig.WriteAsync(signOptions.Output);
+
+            AnsiConsole.Output.WriteLine("Successfully signed.");
 
             return 0;
         }

@@ -40,8 +40,10 @@ namespace Microsoft.Framework.Signing
         public string Output { get; set; }
         public string FileName { get; set; }
 
-        public X509Certificate2 FindCert()
+        public X509Certificate2 FindCert(out X509Certificate2Collection includedCerts)
         {
+            includedCerts = null;
+
             X509Store store = null;
             try
             {
@@ -52,6 +54,7 @@ namespace Microsoft.Framework.Signing
                     // If there is a file, load that
                     pool = new X509Certificate2Collection();
                     pool.Import(CertificateFile, Password, X509KeyStorageFlags.DefaultKeySet);
+                    includedCerts = pool;
                 }
                 else
                 {
@@ -102,8 +105,8 @@ namespace Microsoft.Framework.Signing
                         AnsiConsole.Error.WriteLine("The following certificates meet all given criteria:");
                         foreach (var cert in query)
                         {
-                            AnsiConsole.Error.WriteLine("    Issued to: " + GetCommonName(cert.Subject));
-                            AnsiConsole.Error.WriteLine("    Issued by: " + GetCommonName(cert.Issuer));
+                            AnsiConsole.Error.WriteLine("    Issued to: " + cert.SubjectName.CommonName());
+                            AnsiConsole.Error.WriteLine("    Issued by: " + cert.IssuerName.CommonName());
                             AnsiConsole.Error.WriteLine("    Expires:   " + cert.NotAfter.ToString("ddd MMM dd HH:mm:ss yyyy"));
                             AnsiConsole.Error.WriteLine("    SHA1 hash: " + cert.Thumbprint);
                             AnsiConsole.Error.WriteLine("");
@@ -124,20 +127,6 @@ namespace Microsoft.Framework.Signing
                     store.Close();
                 }
             }
-        }
-
-        private string GetCommonName(string dn)
-        {
-            if (dn.StartsWith("CN="))
-            {
-                var commaIdx = dn.IndexOf(',');
-                if (commaIdx == -1)
-                {
-                    commaIdx = dn.Length;
-                }
-                return dn.Substring(3, commaIdx - 3);
-            }
-            return dn;
         }
 
         internal static SignOptions FromOptions(string fileName, IEnumerable<CommandOption> options)

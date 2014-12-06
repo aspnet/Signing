@@ -197,7 +197,7 @@ namespace Microsoft.Framework.Signing
         /// <param name="signingCert">The certificate and private key to sign the document with</param>
         public void Sign(X509Certificate2 signingCert)
         {
-            Sign(signingCert, null);
+            Sign(signingCert, null, null);
         }
 
         /// <summary>
@@ -207,8 +207,22 @@ namespace Microsoft.Framework.Signing
         /// signature.
         /// </summary>
         /// <param name="signingCert">The certificate and private key to sign the document with</param>
-        /// <param name="additionalCertificates">Additional certificates to use when building the chain to embed</param>
-        public void Sign(X509Certificate2 signingCert, X509Certificate2Collection additionalCertificates)
+        /// <param name="chainBuildingCertificates">Additional certificates to use when building the chain to embed</param>
+        public void Sign(X509Certificate2 signingCert, X509Certificate2Collection chainBuildingCertificates)
+        {
+            Sign(signingCert, chainBuildingCertificates, null);
+        }
+
+        /// <summary>
+        /// Signs the signature request with the specified certificate, embeds all the specified additional certificates
+        /// in the signature, and uses the provided additional certificates (along with the Operating
+        /// System certificate store, if present) to build the full chain for the signing cert and
+        /// embed that in the signature.
+        /// </summary>
+        /// <param name="signingCert">The certificate and private key to sign the document with</param>
+        /// <param name="chainBuildingCertificates">Additional certificates to use when building the chain to embed</param>
+        /// <param name="certificatesToEmbed">Additional certificates to add to the signature</param>
+        public void Sign(X509Certificate2 signingCert, X509Certificate2Collection chainBuildingCertificates, X509Certificate2Collection certificatesToEmbed)
         {
             if (_signature != null)
             {
@@ -234,9 +248,9 @@ namespace Microsoft.Framework.Signing
 
             // Embed all the certificates in the CMS
             var chain = new X509Chain();
-            if (additionalCertificates != null)
+            if (chainBuildingCertificates != null)
             {
-                chain.ChainPolicy.ExtraStore.AddRange(additionalCertificates);
+                chain.ChainPolicy.ExtraStore.AddRange(chainBuildingCertificates);
             }
             chain.Build(signingCert);
             foreach (var element in chain.ChainElements)
@@ -246,6 +260,10 @@ namespace Microsoft.Framework.Signing
                 {
                     signer.Certificates.Add(element.Certificate);
                 }
+            }
+            if (certificatesToEmbed != null)
+            {
+                signer.Certificates.AddRange(certificatesToEmbed);
             }
 
             // Create the message and sign it
