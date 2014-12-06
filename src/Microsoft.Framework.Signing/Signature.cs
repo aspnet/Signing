@@ -8,15 +8,13 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Framework.Asn1;
+using Microsoft.Framework.Signing.Native;
 
 namespace Microsoft.Framework.Signing
 {
     public class Signature
     {
         public static readonly string DefaultDigestAlgorithmName = "sha256";
-        public static readonly int CurrentVersion = 1;
-
-        internal static readonly int MaxSupportedVersion = CurrentVersion;
 
         private static readonly string SignatureRequestPemHeader = "BEGIN SIGNATURE REQUEST";
         private static readonly string SignatureRequestPemFooter = "END SIGNATURE REQUEST";
@@ -24,37 +22,29 @@ namespace Microsoft.Framework.Signing
         private static readonly string SignaturePemFooter = "END SIGNATURE";
 
         private SignedCms _signature = null;
-        private SignaturePayload _payload;
 
-        public int Version { get { return _payload.Version; } }
-        public IReadOnlyList<SignatureEntry> Entries { get { return _payload.Entries; } }
         public bool IsSigned { get { return _signature != null; } }
+        public bool IsTimestamped { get { return false; } }
 
-        public Signer Signer { get; }
+        public SignaturePayload Payload { get; private set; }
+        public Signer Signer { get; private set; }
         public X509Certificate2Collection Certificates { get { return _signature?.Certificates; } }
-
 
         /// <summary>
         /// Constructs a new signature request for the specified file
         /// </summary>
-        /// <param name="signatureEntry">A signature entry describing the file to create a signature request for</param>
+        /// <param name="payload">A signature entry describing the file to create a signature request for</param>
         /// <remarks>
         /// Until <see cref="Sign"/> is called, this structure represents a signature request.
         /// </remarks>
-        public Signature(SignatureEntry signatureEntry)
-            : this(new SignaturePayload(CurrentVersion, signatureEntry)) { }
-
-        private Signature(SignaturePayload payload)
+        public Signature(SignaturePayload payload)
         {
-            _payload = payload;
+            Payload = payload;
         }
 
         private Signature(SignedCms cms)
         {
-            _payload = SignaturePayload.Decode(cms.ContentInfo.Content);
-            _signature = cms;
-
-            Signer = Signer.FromSignerInfo(_signature.SignerInfos.Cast<SignerInfo>().FirstOrDefault());
+            SetSignature(cms);
         }
 
         /// <summary>
@@ -67,7 +57,7 @@ namespace Microsoft.Framework.Signing
             {
                 return new PemData(
                     header: SignatureRequestPemHeader,
-                    data: _payload.Encode(),
+                    data: Payload.Encode(),
                     footer: SignatureRequestPemFooter).Encode();
             }
             else
@@ -147,6 +137,59 @@ namespace Microsoft.Framework.Signing
             }
         }
 
+        public void Timestamp(Uri timestampingAuthority)
+        {
+            Timestamp(timestampingAuthority, DefaultDigestAlgorithmName);
+        }
+
+        public void Timestamp(Uri timestampingAuthority, string requestedDigestAlgorithmName)
+        {
+            var digestAlgorithmOid = CryptoConfig.MapNameToOID(requestedDigestAlgorithmName);
+            if (digestAlgorithmOid == null)
+            {
+                throw new InvalidOperationException("Unknown digest algorithm: " + requestedDigestAlgorithmName);
+            }
+
+            // Get the encrypted digest to timestamp
+            byte[] digest;
+            using (var cms = NativeCms.Decode(_signature.Encode(), detached: false))
+            {
+                digest = cms.GetEncryptedDigest();
+            }
+
+            // Request a timestamp and add it to the signature as an unsigned attribute
+            var timestamp = RFC3161.RequestTimestamp(digest, digestAlgorithmOid, timestampingAuthority);
+
+            //// Build the certificate chain locally to ensure we store the whole thing
+            //var chain = new X509Chain();
+            //if (!chain.Build(timestamp.SignerInfos[0].Certificate))
+            //{
+            //    throw new InvalidOperationException("Unable to build certificate chain for timestamp!");
+            //}
+
+            //// Reopen the timestamp as a native cms so we can modify it
+            //byte[] rawTimestamp;
+            //using (var cms = NativeCms.Decode(timestamp.Encode(), detached: false))
+            //{
+            //    cms.AddCertificates(chain.ChainElements
+            //        .Cast<X509ChainElement>()
+            //        .Where(c => !timestamp.Certificates.Contains(c.Certificate))
+            //        .Select(c => c.Certificate.Export(X509ContentType.Cert)));
+            //    rawTimestamp = cms.Encode();
+            //}
+
+            // Reopen the signature as a native cms so we can modify it
+            SignedCms newSignature = new SignedCms();
+            using (var cms = NativeCms.Decode(_signature.Encode(), detached: false))
+            {
+                cms.AddTimestamp(timestamp.Encode());
+                newSignature.Decode(cms.Encode());
+            }
+
+            // Reset the signature
+            SetSignature(newSignature);
+        }
+
         /// <summary>
         /// Signs the signature request with the specified certificate. Uses only the Operating
         /// System certificate store (if present) to build the full chain for the signing cert.
@@ -156,7 +199,7 @@ namespace Microsoft.Framework.Signing
         {
             Sign(signingCert, null);
         }
-        
+
         /// <summary>
         /// Signs the signature request with the specified certificate,
         /// and uses the provided additional certificates (along with the Operating System certificate
@@ -167,12 +210,13 @@ namespace Microsoft.Framework.Signing
         /// <param name="additionalCertificates">Additional certificates to use when building the chain to embed</param>
         public void Sign(X509Certificate2 signingCert, X509Certificate2Collection additionalCertificates)
         {
-            if (_signature != null) {
+            if (_signature != null)
+            {
                 throw new InvalidOperationException("A signature already exists");
             }
 
             // Create the content info
-            var content = new ContentInfo(_payload.Encode());
+            var content = new ContentInfo(Payload.Encode());
 
             // Create the signer
             var signer = new CmsSigner(SubjectIdentifierType.SubjectKeyIdentifier, signingCert);
@@ -212,6 +256,14 @@ namespace Microsoft.Framework.Signing
             _signature = cms;
         }
 
+        private void SetSignature(SignedCms cms)
+        {
+            Payload = SignaturePayload.Decode(cms.ContentInfo.Content);
+            _signature = cms;
+
+            Signer = Signer.FromSignerInfo(_signature.SignerInfos.Cast<SignerInfo>().FirstOrDefault());
+        }
+
         private static Signature DecodeRequest(byte[] data)
         {
             var payload = SignaturePayload.Decode(data);
@@ -223,59 +275,6 @@ namespace Microsoft.Framework.Signing
             SignedCms cms = new SignedCms();
             cms.Decode(data);
             return new Signature(cms);
-        }
-
-        // Support class used to represent the payload of the signature itself.
-        private class SignaturePayload
-        {
-            public int Version { get; }
-            public IReadOnlyList<SignatureEntry> Entries { get; }
-
-            public SignaturePayload(int version, SignatureEntry entry)
-            {
-                Version = version;
-                Entries = new List<SignatureEntry>() { entry }.AsReadOnly();
-            }
-
-            public byte[] Encode()
-            {
-                // Write the signature payload
-                var payload = new Asn1Sequence(
-                    new Asn1Integer(Signature.CurrentVersion),
-                    new Asn1Set(Entries.Select(e => e.ToAsn1())));
-                return DerEncoder.Encode(payload);
-            }
-
-            public static SignaturePayload Decode(byte[] data) {
-                var parsed = BerParser.Parse(data);
-                var root = parsed as Asn1Sequence;
-                if (root == null || root.Values.Count < 2)
-                {
-                    // Invalid Request format
-                    return null;
-                }
-                var ver = root.Values[0] as Asn1Integer;
-                var signatures = root.Values[1] as Asn1Set;
-                if (ver == null || signatures == null)
-                {
-                    // Invalid Request format
-                    return null;
-                }
-
-                if (ver.Value > MaxSupportedVersion || signatures.Values.Count != 1)
-                {
-                    // Version not supported!
-                    return null;
-                }
-
-                var entry = SignatureEntry.TryFromAsn1(signatures.Values.Single());
-                if (entry == null)
-                {
-                    return null;
-                }
-
-                return new SignaturePayload((int)ver.Value, entry);
-            }
         }
     }
 }

@@ -17,17 +17,16 @@ namespace Microsoft.Framework.Signing.Test
 
             // Act
             var sigreq = new Signature(
-                SignatureEntry.Compute(
-                    "testdata", 
-                    testData, 
+                SignaturePayload.Compute(
+                    "testdata",
+                    testData,
                     Signature.DefaultDigestAlgorithmName));
 
             // Assert
-            var entry = sigreq.Entries.Single();
-            Assert.Equal("testdata", entry.ContentIdentifier);
-            Assert.Equal(hash, entry.Digest);
-            Assert.Equal(1, entry.Version);
-            Assert.Equal("2.16.840.1.101.3.4.2.1", entry.DigestAlgorithm); // sha256 OID
+            Assert.Equal("testdata", sigreq.Payload.ContentIdentifier);
+            Assert.Equal(hash, sigreq.Payload.Digest);
+            Assert.Equal(1, sigreq.Payload.Version);
+            Assert.Equal("2.16.840.1.101.3.4.2.1", sigreq.Payload.DigestAlgorithm.Value); // sha256 OID
         }
 
         private byte[] GenerateTestData()

@@ -2,13 +2,21 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 
 namespace Microsoft.Framework.Signing.Native
 {
     internal class NativeCms : IDisposable
     {
+        private static readonly Oid SignatureTimeStampTokenAttributeOid = new Oid("1.2.840.113549.1.9.16.2.14");
+
         private SafeCryptMsgHandle _handle;
         private bool _detached;
+
+        public NativeCms(IntPtr handle)
+        {
+            _handle = new SafeCryptMsgHandle(handle, ownsHandle: false);
+        }
 
         private NativeCms(SafeCryptMsgHandle handle, bool detached)
         {
@@ -47,7 +55,7 @@ namespace Microsoft.Framework.Signing.Native
             }
             finally
             {
-                SafeFree(certCountUnmanaged);
+                NativeUtils.SafeFree(certCountUnmanaged);
             }
 
             // Now retrieve the certs
@@ -68,15 +76,11 @@ namespace Microsoft.Framework.Signing.Native
                 IntPtr unmanagedBlob = IntPtr.Zero;
                 try
                 {
-                    // Copy the certificate to unmanaged memory
-                    unmanagedCert = Marshal.AllocHGlobal(cert.Length);
-                    Marshal.Copy(cert, 0, unmanagedCert, cert.Length);
-
                     // Build blob holder
                     var blob = new CRYPT_INTEGER_BLOB()
                     {
                         cbData = (uint)cert.Length,
-                        pbData = unmanagedCert
+                        pbData = cert
                     };
 
                     // Copy it to unmanaged memory
@@ -95,30 +99,26 @@ namespace Microsoft.Framework.Signing.Native
                 }
                 finally
                 {
-                    SafeFree(unmanagedCert);
-                    SafeFree(unmanagedBlob);
+                    NativeUtils.SafeFree(unmanagedCert);
+                    NativeUtils.SafeFree(unmanagedBlob);
                 }
             }
         }
 
-        public void AddCountersignature(byte[] signerInfo)
+        public void AddTimestamp(byte[] timeStampCms)
         {
-            IntPtr unmanagedCountersignature = IntPtr.Zero;
+            IntPtr unmanagedTimestamp = IntPtr.Zero;
             IntPtr unmanagedBlob = IntPtr.Zero;
             IntPtr unmanagedAttr = IntPtr.Zero;
             IntPtr unmanagedEncoded = IntPtr.Zero;
             IntPtr unmanagedAddAttr = IntPtr.Zero;
             try
             {
-                // Copy the signature to unmanaged memory
-                unmanagedCountersignature = Marshal.AllocHGlobal(signerInfo.Length);
-                Marshal.Copy(signerInfo, 0, unmanagedCountersignature, signerInfo.Length);
-
-                // Wrap it in a CRYPT_INTEGER_BLOB and copy that to unmanaged memory
+                // Wrap the timestamp in a CRYPT_INTEGER_BLOB and copy that to unmanaged memory
                 var blob = new CRYPT_INTEGER_BLOB()
                 {
-                    cbData = (uint)signerInfo.Length,
-                    pbData = unmanagedCountersignature
+                    cbData = (uint)timeStampCms.Length,
+                    pbData = timeStampCms
                 };
                 unmanagedBlob = Marshal.AllocHGlobal(Marshal.SizeOf(blob));
                 Marshal.StructureToPtr(blob, unmanagedBlob, fDeleteOld: false);
@@ -126,14 +126,14 @@ namespace Microsoft.Framework.Signing.Native
                 // Wrap it in a CRYPT_ATTRIBUTE and copy that too!
                 var attr = new CRYPT_ATTRIBUTE()
                 {
-                    pszObjId = NativeMethods.OID_PKCS9_COUNTERSIGNATURE,
+                    pszObjId = SignatureTimeStampTokenAttributeOid.Value,
                     cValue = 1,
                     rgValue = unmanagedBlob
                 };
                 unmanagedAttr = Marshal.AllocHGlobal(Marshal.SizeOf(attr));
                 Marshal.StructureToPtr(attr, unmanagedAttr, fDeleteOld: false);
 
-                // Now encode the object using ye olde double-call find-out-the-length mechanism :)
+                // Now encode the object using ye olde double-call-to-find-out-the-length mechanism :)
                 uint encodedLength = 0;
                 if (!NativeMethods.CryptEncodeObjectEx(
                     dwCertEncodingType: NativeMethods.X509_ASN_ENCODING | NativeMethods.PKCS_7_ASN_ENCODING,
@@ -164,6 +164,10 @@ namespace Microsoft.Framework.Signing.Native
                     Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
                 }
 
+                // Bring it back into managed memory, because CRYPT_INTEGER_BLOB uses a managed byte[]
+                byte[] encoded = new byte[encodedLength];
+                Marshal.Copy(unmanagedEncoded, encoded, 0, (int)encodedLength);
+
                 // Create the structure used to add the attribute
                 var addAttr = new CMSG_CTRL_ADD_SIGNER_UNAUTH_ATTR_PARA()
                 {
@@ -171,14 +175,14 @@ namespace Microsoft.Framework.Signing.Native
                     BLOB = new CRYPT_INTEGER_BLOB()
                     {
                         cbData = encodedLength,
-                        pbData = unmanagedEncoded
+                        pbData = encoded
                     }
                 };
                 addAttr.cbSize = (uint)Marshal.SizeOf(addAttr);
                 unmanagedAddAttr = Marshal.AllocHGlobal(Marshal.SizeOf(addAttr));
                 Marshal.StructureToPtr(addAttr, unmanagedAddAttr, fDeleteOld: false);
 
-                // Now store the countersignature in the message... FINALLY
+                // Now store the timestamp in the message... FINALLY
                 if (!NativeMethods.CryptMsgControl(
                     _handle,
                     dwFlags: 0,
@@ -190,11 +194,11 @@ namespace Microsoft.Framework.Signing.Native
             }
             finally
             {
-                SafeFree(unmanagedCountersignature);
-                SafeFree(unmanagedBlob);
-                SafeFree(unmanagedAttr);
-                SafeFree(unmanagedEncoded);
-                SafeFree(unmanagedAddAttr);
+                NativeUtils.SafeFree(unmanagedTimestamp);
+                NativeUtils.SafeFree(unmanagedBlob);
+                NativeUtils.SafeFree(unmanagedAttr);
+                NativeUtils.SafeFree(unmanagedEncoded);
+                NativeUtils.SafeFree(unmanagedAddAttr);
             }
         }
 
@@ -269,17 +273,9 @@ namespace Microsoft.Framework.Signing.Native
             }
             finally
             {
-                SafeFree(unmanagedDigestPointer);
+                NativeUtils.SafeFree(unmanagedDigestPointer);
             }
             return data;
-        }
-
-        private static void SafeFree(IntPtr unmanagedCountersignature)
-        {
-            if (unmanagedCountersignature != IntPtr.Zero)
-            {
-                Marshal.FreeHGlobal(unmanagedCountersignature);
-            }
         }
     }
 }

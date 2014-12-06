@@ -12,7 +12,10 @@ namespace Microsoft.Framework.Signing.Native
 
         internal const int ERROR_MORE_DATA = 234;
 
+        internal const uint TIMESTAMP_VERIFY_CONTEXT_SIGNATURE = 0x20;
+
         internal const string OID_PKCS9_COUNTERSIGNATURE = "1.2.840.113549.1.9.6";
+
 
         // http://msdn.microsoft.com/en-us/library/windows/desktop/aa380228(v=vs.85).aspx
         [DllImport("Crypt32.dll", SetLastError = true)]
@@ -45,6 +48,10 @@ namespace Microsoft.Framework.Signing.Native
             IntPtr pvData,
             ref uint pcbData);
 
+        // http://msdn.microsoft.com/en-us/library/windows/desktop/aa380216(v=vs.85).aspx
+        [DllImport("Crypt32.dll")]
+        public static extern void CryptMemFree(IntPtr unmanagedContext);
+
         // http://msdn.microsoft.com/en-us/library/windows/desktop/aa380220(v=vs.85).aspx
         [DllImport("Crypt32.dll", SetLastError = true)]
         public static extern bool CryptMsgControl(
@@ -64,6 +71,26 @@ namespace Microsoft.Framework.Signing.Native
             IntPtr pvEncoded,
             ref uint pcbEncoded);
 
+        // http://msdn.microsoft.com/en-us/library/windows/desktop/dd433803%28v=vs.85%29.aspx
+        [DllImport("Crypt32.dll", SetLastError = true)]
+        public static extern bool CryptRetrieveTimeStamp(
+            [MarshalAs(UnmanagedType.LPWStr)] string wszUrl,
+            uint dwRetrievalFlags,
+            uint dwTimeout,
+            [MarshalAs(UnmanagedType.LPStr)] string pszHashId,
+            ref CRYPT_TIMESTAMP_PARA pPara,
+            byte[] pbData,
+            uint cbData,
+            out IntPtr ppTsContext,
+            IntPtr ppTsSigner,
+            IntPtr phStore);
+
+        // http://msdn.microsoft.com/en-us/library/windows/desktop/aa376026(v=vs.85).aspx
+        [DllImport("Crypt32.dll", SetLastError = true)]
+        public static extern bool CertCloseStore(
+            IntPtr hCertStore,
+            uint dwFlags);
+
         internal static int GetHRForWin32Error(int err)
         {
             if ((err & 0x80000000) == 0x80000000)
@@ -71,6 +98,24 @@ namespace Microsoft.Framework.Signing.Native
             else
                 return (err & 0x0000FFFF) | unchecked((int)0x80070000);
         }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct CRYPT_TIMESTAMP_PARA
+    {
+        public string pszTSAPolicyId;
+        public bool fRequestCerts;
+        public CRYPT_INTEGER_BLOB Nonce;
+        public uint cExtension;
+        public IntPtr rgExtension;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct CRYPT_TIMESTAMP_CONTEXT
+    {
+        public uint cbEncoded;
+        public IntPtr pbEncoded;
+        public IntPtr pTimeStamp;
     }
 
     // http://msdn.microsoft.com/en-us/library/windows/desktop/aa381139(v=vs.85).aspx
@@ -97,7 +142,16 @@ namespace Microsoft.Framework.Signing.Native
     internal struct CRYPT_INTEGER_BLOB
     {
         public uint cbData;
-        public IntPtr pbData;
+        public byte[] pbData;
+
+        public static CRYPT_INTEGER_BLOB FromByteArray(byte[] data)
+        {
+            return new CRYPT_INTEGER_BLOB()
+            {
+                cbData = (uint)data.Length,
+                pbData = data
+            };
+        }
     }
 
     internal enum CMSG_CONTROL_TYPE : uint
@@ -185,7 +239,8 @@ namespace Microsoft.Framework.Signing.Native
 
     public class SafeCryptMsgHandle : SafeHandle
     {
-        private SafeCryptMsgHandle() : base(invalidHandleValue: IntPtr.Zero, ownsHandle: true) { }
+        public SafeCryptMsgHandle() : base(IntPtr.Zero, ownsHandle: true) { }
+        public SafeCryptMsgHandle(IntPtr handle, bool ownsHandle) : base(handle, ownsHandle) { }
 
         public override bool IsInvalid
         {

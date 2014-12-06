@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -16,26 +17,39 @@ namespace Microsoft.Framework.Signing
 
             // Display the signed files
             AnsiConsole.Output.WriteLine("Signature Payload");
-            foreach (var entry in sig.Entries)
+            AnsiConsole.Output.WriteLine(" Version: " + sig.Payload.Version);
+            AnsiConsole.Output.WriteLine(" Content Identifier: " + sig.Payload.ContentIdentifier);
+            AnsiConsole.Output.WriteLine(" Digest Algorithm: " + sig.Payload.DigestAlgorithm.FriendlyName);
+            AnsiConsole.Output.WriteLine(" Digest: " + BitConverter.ToString(sig.Payload.Digest).Replace("-", ""));
+
+            // Check the digest?
+            var payloadFile = Path.Combine(Path.GetDirectoryName(signatureFile), sig.Payload.ContentIdentifier);
+            bool? verified = null;
+            if (File.Exists(payloadFile))
             {
-                AnsiConsole.Output.WriteLine("  " +
-                    entry.ContentIdentifier + " = " +
-                    GetName(entry.DigestAlgorithm) + ":" +
-                    Convert.ToBase64String(entry.Digest));
+                verified = sig.Payload.Verify(payloadFile);
             }
+
+            if (verified == null)
+            {
+                AnsiConsole.Output.WriteLine(" Unable to locate content file for verification");
+            }
+            else if (verified == true)
+            {
+                AnsiConsole.Output.WriteLine(" Content file matches signature!");
+            }
+            else
+            {
+                AnsiConsole.Output.WriteLine(" Content file does NOT match signature!");
+            }
+
+            AnsiConsole.Output.WriteLine("");
 
             // Display the signature data
             if (sig.IsSigned)
             {
                 AnsiConsole.Output.WriteLine("Signer Information:");
                 DumpSigner(sig, sig.Signer);
-
-                //foreach (var counterSigner in sig.CounterSigners)
-                //{
-                //    AnsiConsole.Output.WriteLine("");
-                //    AnsiConsole.Output.WriteLine("\x1b[32;1mCountersigner Information:\x1b[30;0m");
-                //    DumpSigner(sig, counterSigner);
-                //}
             }
             else
             {

@@ -33,54 +33,67 @@ namespace Microsoft.Framework.Signing
 
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
             app.HelpOption("-h|--help");
+
             app.Command("sigreq", sigreq =>
             {
                 sigreq.Description = "Creates a signing request for the specific file";
                 var fileName = sigreq.Argument(
-                    "filename", 
+                    "filename",
                     "the name of the file to create a signature request for");
                 var outputFile = sigreq.Option(
-                    "-o|--output", 
-                    "the name of the signature request file to create (defaults to the input filename with the '.sigreq' extension added)", 
+                    "-o|--output",
+                    "the name of the signature request file to create (defaults to the input filename with the '.sigreq' extension added)",
                     CommandOptionType.SingleValue);
                 var digestAlgorithm = sigreq.Option(
-                    "-alg|--algorithm", 
-                    "the name of the digest algorithm to use", 
+                    "-alg|--algorithm",
+                    "the name of the digest algorithm to use",
                     CommandOptionType.SingleValue);
                 sigreq.OnExecute(() =>
                     Commands.CreateSigningRequest(
-                        fileName.Value,
-                        outputFile.Value(),
-                        digestAlgorithm.Value()));
+                    fileName.Value,
+                    outputFile.Value(),
+                    digestAlgorithm.Value()));
             }, addHelpCommand: false);
 
             app.Command("sign", sign =>
             {
                 sign.Description = "Signs a file";
                 var fileName = sign.Argument("filename", "the name of the file to sign");
-                var certificates = sign.Argument("certificates", "the path to a file containing certificates to sign with OR a value to search the certificate store for");
-                var storeName = sign.Option("-sn|--storeName <storeName>", "the name of the certificate store to search for the certificate", CommandOptionType.SingleValue);
-                var storeLocation = sign.Option("-sl|--storeLocation <storeLocation>", "the location of the certificate store to search for the certificate", CommandOptionType.SingleValue);
-                var findType = sign.Option("-ft|--findType <x509findType>", "the criteria to search on (see http://msdn.microsoft.com/en-us/library/system.security.cryptography.x509certificates.x509findtype(v=vs.110).aspx for example values)", CommandOptionType.SingleValue);
-                var outputFile = sign.Option("-o|--output <outputFile>", "the path to the signature file to output (by default, the existing file name plus '.sig' is used)", CommandOptionType.SingleValue);
-                var password = sign.Option("-p|--password <password>", "the password for the PFX file", CommandOptionType.SingleValue);
-                sign.OnExecute(() => Commands.Sign(fileName.Value, certificates.Value, outputFile.Value(), password.Value(), storeName.Value(), storeLocation.Value(), findType.Value()));
+
+                sign.Option("-a|--auto-select", "select the best signing cert automatically (the one valid for the longest time from now)", CommandOptionType.NoValue);
+                sign.Option("-f|--file <certificateFile>", "the path to a file containing certificates to sign with", CommandOptionType.SingleValue);
+                sign.Option("-ac|--add-certs <addCertificatesFile>", "add additional certficiates from <certificatesFile> to the signature block", CommandOptionType.SingleValue);
+
+                sign.Option("-i|--issuer <issuerName>", "specify the Issuer of the signing cert, or a substring", CommandOptionType.SingleValue);
+                sign.Option("-n|--subject <subjectName>", "specify the Subject Name of the signing cert, or a substring", CommandOptionType.SingleValue);
+                sign.Option("-p|--password <password>", "the password for the file specified by <certificateFile>", CommandOptionType.SingleValue);
+                sign.Option("-s|--store <storeName>", "specify the Store to open when searching for the cert (defaults to the 'My' Store)", CommandOptionType.SingleValue);
+                sign.Option("-sm|--machine-store", "open a machine Store instead of a user Store", CommandOptionType.SingleValue);
+                sign.Option("-sha1|--thumbprint <certhash>", "specifies the SHA1 thumbprint of the certificate to use to sign the file", CommandOptionType.SingleValue);
+
+                sign.Option("-csp|--key-provider <cspname>", "specify the CSP containing the Private Key Container", CommandOptionType.SingleValue);
+                sign.Option("-kc|--key-container <containername>", "specify the Key Container Name of the Private Key", CommandOptionType.SingleValue);
+
+                sign.Option("-o|--output <outputFile>", "the path to the signature file to output (by default, the existing file name plus '.sig' is used)", CommandOptionType.SingleValue);
+
+                sign.OnExecute(() => Commands.Sign(fileName.Value, sign.Options));
             }, addHelpCommand: false);
+
+            app.Command("timestamp", timestamp =>
+            {
+                timestamp.Description = "Timestamps an existing signature";
+                var signature = timestamp.Argument("signature", "the path to the signature file");
+                var authority = timestamp.Argument("url", "the path to a Authenticode trusted timestamping authority");
+                var algorithm = timestamp.Option("-alg|--algorithm <algorithmName>", "the name of the hash algorithm to use for the timestamp", CommandOptionType.SingleValue);
+                timestamp.OnExecute(() => Commands.Timestamp(signature.Value, authority.Value, algorithm.Value()));
+            }, addHelpCommand: false);
+
             app.Command("view", view =>
             {
                 view.Description = "Views a signature file";
                 var fileName = view.Argument("filename", "the name of the signature file to view");
                 view.OnExecute(() => Commands.View(fileName.Value));
             }, addHelpCommand: false);
-
-            //app.Command("timestamp", timestamp =>
-            //{
-            //    timestamp.Description = "Timestamps an existing signature";
-            //    var signature = timestamp.Argument("signature", "the path to the signature file");
-            //    var authority = timestamp.Argument("url", "the path to a Authenticode trusted timestamping authority");
-            //    timestamp.OnExecute(() => Timestamp(signature.Value, authority.Value));
-            //}, addHelpCommand: false);
-            //app.Command("sign", sign =>
             app.Command("help", help =>
             {
                 help.Description = "Get help on the application, or a specific command";
@@ -91,72 +104,5 @@ namespace Microsoft.Framework.Signing
 
             app.Execute(args);
         }
-
-        //private async Task<int> Timestamp(string signature, string authority)
-        //{
-        //    // Open the signature and decode it
-        //    byte[] data = PemFormatter.Unformat(File.ReadAllBytes(signature));
-
-        //    // Load the NativeCms object
-        //    byte[] digest;
-        //    using (var cms = NativeCms.Decode(data, detached: true))
-        //    {
-        //        // Read the encrypted digest
-        //        digest = cms.GetEncryptedDigest();
-
-        //        // Build the ASN.1 Timestamp Packet
-        //        var req = new Asn1Sequence(                     //  TimeStampRequest ::= SEQUENCE {
-        //            Asn1Oid.Parse("1.3.6.1.4.1.311.3.2.1"),     //      countersignatureType
-        //                                                        //      attributes (none)
-        //            new Asn1Sequence(                           //      contentInfo ::= SEQUENCE {
-        //                Asn1Oid.Parse("1.2.840.113549.1.7.1"),  //          contentType
-        //                new Asn1ExplicitTag(tag: 0,             //          content
-        //                    value: new Asn1OctetString(digest))));
-
-        //        var packet = DerEncoder.Encode(req);
-
-        //        var client = new HttpClient();
-
-        //        // Timestamp it!
-        //        AnsiConsole.Output.WriteLine("Posting to timestamping server: " + authority);
-        //        var content = new StringContent(Convert.ToBase64String(packet));
-        //        content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-        //        var response = await client.PostAsync(authority, content);
-        //        if (!response.IsSuccessStatusCode)
-        //        {
-        //            AnsiConsole.Error.WriteLine("HTTP Error: " + response.StatusCode.ToString());
-        //            return -1;
-        //        }
-
-        //        var resp = await response.Content.ReadAsStringAsync();
-        //        AnsiConsole.Output.WriteLine("Response: HTTP " + (int)response.StatusCode + " " + response.ReasonPhrase);
-
-        //        // Load the result into a NativeCms
-        //        var respBytes = Convert.FromBase64String(resp);
-        //        byte[] signerInfo;
-        //        IEnumerable<byte[]> certs;
-        //        using (var timestampCms = NativeCms.Decode(respBytes, detached: true))
-        //        {
-        //            // Read the signerinfo and certificates
-        //            signerInfo = timestampCms.GetEncodedSignerInfo();
-
-        //            certs = timestampCms.GetCertificates();
-        //        }
-
-        //        // Write the certs into the cms
-        //        cms.AddCertificates(certs);
-
-        //        // Write the signer
-        //        cms.AddCountersignature(signerInfo);
-
-        //        // Read the new message and dump it!
-        //        var encoded = cms.Encode();
-        //        File.WriteAllBytes(
-        //            signature,
-        //            PemFormatter.Format(encoded, "BEGIN SIGNATURE", "END SIGNATURE"));
-        //    }
-
-        //    return 0;
-        //}
     }
 }
