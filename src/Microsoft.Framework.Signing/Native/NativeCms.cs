@@ -45,10 +45,12 @@ namespace Microsoft.Framework.Signing.Native
                 try
                 {
                     // Build blob holder
-                    var blob = new CRYPT_INTEGER_BLOB()
+                    unmanagedCert = Marshal.AllocHGlobal(cert.Length);
+                    Marshal.Copy(cert, 0, unmanagedCert, cert.Length);
+                    var blob = new CRYPT_INTEGER_BLOB_INTPTR()
                     {
                         cbData = (uint)cert.Length,
-                        pbData = cert
+                        pbData = unmanagedCert
                     };
 
                     // Copy it to unmanaged memory

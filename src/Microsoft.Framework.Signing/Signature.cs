@@ -160,29 +160,29 @@ namespace Microsoft.Framework.Signing
             // Request a timestamp and add it to the signature as an unsigned attribute
             var timestamp = RFC3161.RequestTimestamp(digest, digestAlgorithmOid, timestampingAuthority);
 
-            //// Build the certificate chain locally to ensure we store the whole thing
-            //var chain = new X509Chain();
-            //if (!chain.Build(timestamp.SignerInfos[0].Certificate))
-            //{
-            //    throw new InvalidOperationException("Unable to build certificate chain for timestamp!");
-            //}
+            // Build the certificate chain locally to ensure we store the whole thing
+            var chain = new X509Chain();
+            if (!chain.Build(timestamp.SignerInfos[0].Certificate))
+            {
+                throw new InvalidOperationException("Unable to build certificate chain for timestamp!");
+            }
 
-            //// Reopen the timestamp as a native cms so we can modify it
-            //byte[] rawTimestamp;
-            //using (var cms = NativeCms.Decode(timestamp.Encode(), detached: false))
-            //{
-            //    cms.AddCertificates(chain.ChainElements
-            //        .Cast<X509ChainElement>()
-            //        .Where(c => !timestamp.Certificates.Contains(c.Certificate))
-            //        .Select(c => c.Certificate.Export(X509ContentType.Cert)));
-            //    rawTimestamp = cms.Encode();
-            //}
+            // Reopen the timestamp as a native cms so we can modify it
+            byte[] rawTimestamp;
+            using (var cms = NativeCms.Decode(timestamp.Encode(), detached: false))
+            {
+                cms.AddCertificates(chain.ChainElements
+                    .Cast<X509ChainElement>()
+                    .Where(c => !timestamp.Certificates.Contains(c.Certificate))
+                    .Select(c => c.Certificate.Export(X509ContentType.Cert)));
+                rawTimestamp = cms.Encode();
+            }
 
             // Reopen the signature as a native cms so we can modify it
             SignedCms newSignature = new SignedCms();
             using (var cms = NativeCms.Decode(_signature.Encode(), detached: false))
             {
-                cms.AddTimestamp(timestamp.Encode());
+                cms.AddTimestamp(rawTimestamp);
                 var newSig = cms.Encode();
                 newSignature.Decode(newSig);
             }
