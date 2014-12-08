@@ -76,6 +76,9 @@ namespace Microsoft.Framework.Signing
 
                 sign.Option("-o|--output <outputFile>", "the path to the signature file to output (by default, the existing file name plus '.sig' is used)", CommandOptionType.SingleValue);
 
+                sign.Option("-t|-tr|--timestamper <timestampAuthorityUrl>", "a URL to an RFC3161-compliant timestamping authority to timestamp the signature with", CommandOptionType.SingleValue);
+                sign.Option("-td|--timestamper-algorithm <algorithmName>", "the name of the hash algorithm to use for the timestamp", CommandOptionType.SingleValue);
+
                 sign.OnExecute(() => Commands.Sign(fileName.Value, sign.Options));
             }, addHelpCommand: false);
 
@@ -88,12 +91,16 @@ namespace Microsoft.Framework.Signing
                 timestamp.OnExecute(() => Commands.Timestamp(signature.Value, authority.Value, algorithm.Value()));
             }, addHelpCommand: false);
 
-            app.Command("view", view =>
+            app.Command("verify", verify =>
             {
-                view.Description = "Views a signature file";
-                var fileName = view.Argument("filename", "the name of the signature file to view");
-                view.OnExecute(() => Commands.View(fileName.Value));
+                verify.Description = "Verifies a signature file";
+                var fileName = verify.Argument("filename", "the name of the signature file to view");
+                var noCheckCerts = verify.Option("-nocerts|--ignore-certificate-errors", "set this switch to ignore errors caused by untrusted certificates", CommandOptionType.NoValue);
+                var skipRevocation = verify.Option("-norevoke|--skip-revocation-check", "set this switch to ignore revocation check failures", CommandOptionType.NoValue);
+                var targetFile = verify.Option("-t|--target-file <targetFile>", "check the signature against <targetFile> (usually read from signature data)", CommandOptionType.SingleValue);
+                verify.OnExecute(() => Commands.Verify(fileName.Value, targetFile.Value(), !noCheckCerts.HasValue(), skipRevocation.HasValue()));
             }, addHelpCommand: false);
+
             app.Command("help", help =>
             {
                 help.Description = "Get help on the application, or a specific command";

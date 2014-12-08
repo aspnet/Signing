@@ -21,14 +21,19 @@ namespace Microsoft.Framework.Signing
         private static readonly string SignaturePemHeader = "BEGIN SIGNATURE";
         private static readonly string SignaturePemFooter = "END SIGNATURE";
 
+        private byte[] _encryptedDigest = null;
         private SignedCms _signature = null;
+        private TimeStampToken _timestamp = null;
 
         public bool IsSigned { get { return _signature != null; } }
-        public bool IsTimestamped { get { return false; } }
+        public bool IsTimestamped { get { return _timestamp != null; } }
 
         public SignaturePayload Payload { get; private set; }
         public Signer Signer { get; private set; }
+        public TimeStampToken Timestamper { get { return _timestamp; } }
         public X509Certificate2Collection Certificates { get { return _signature?.Certificates; } }
+
+        public DateTime? TrustedSigningTimeUtc { get; private set; }
 
         /// <summary>
         /// Constructs a new signature request for the specified file
@@ -277,10 +282,41 @@ namespace Microsoft.Framework.Signing
 
         private void SetSignature(SignedCms cms)
         {
+            TrustedSigningTimeUtc = null;
             Payload = SignaturePayload.Decode(cms.ContentInfo.Content);
             _signature = cms;
 
-            Signer = Signer.FromSignerInfo(_signature.SignerInfos.Cast<SignerInfo>().FirstOrDefault());
+            // Load the encrypted digest using the native APIs
+            using (var nativeCms = NativeCms.Decode(cms.Encode(), detached: false))
+            {
+                _encryptedDigest = nativeCms.GetEncryptedDigest();
+            }
+
+            var signerInfo = _signature.SignerInfos.Cast<SignerInfo>().FirstOrDefault();
+            if (signerInfo != null)
+            {
+                Signer = Signer.FromSignerInfo(signerInfo);
+
+                // Check for a timestamper
+                var attr = signerInfo
+                    .UnsignedAttributes
+                    .Cast<CryptographicAttributeObject>()
+                    .FirstOrDefault(c => c.Oid.Value.Equals(Constants.SignatureTimeStampTokenAttributeOid.Value, StringComparison.OrdinalIgnoreCase));
+                if (attr != null && attr.Values.Count > 0)
+                {
+                    var timestamp = new SignedCms();
+                    timestamp.Decode(attr.Values[0].RawData);
+
+                    // Check the timestamp against the data
+                    var token = RFC3161.VerifyTimestamp(_encryptedDigest, timestamp);
+                    _timestamp = token;
+
+                    if (_timestamp.IsTrusted)
+                    {
+                        TrustedSigningTimeUtc = _timestamp.TimestampUtc;
+                    }
+                }
+            }
         }
 
         private static Signature DecodeRequest(byte[] data)

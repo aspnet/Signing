@@ -23,7 +23,9 @@ namespace Microsoft.Framework.Signing
             { "thumbprint", (opt, self) => self.Thumbprint = opt.Value() },
             { "key-provider", (opt, self) => self.CspName = opt.Value() },
             { "key-container", (opt, self) => self.KeyContainer = opt.Value() },
-            { "output", (opt, self) => self.Output = opt.Value() }
+            { "output", (opt, self) => self.Output = opt.Value() },
+            { "timestamper", (opt, self) => self.Timestamper = opt.Value() },
+            { "timestamper-algorithm", (opt, self) => self.TimestamperAlgorithm = opt.Value() },
         };
 
         public bool AutoSelect { get; set; }
@@ -39,6 +41,8 @@ namespace Microsoft.Framework.Signing
         public string KeyContainer { get; set; }
         public string Output { get; set; }
         public string FileName { get; set; }
+        public string Timestamper { get; set; }
+        public string TimestamperAlgorithm { get; set; }
 
         public X509Certificate2 FindCert(out X509Certificate2Collection includedCerts)
         {

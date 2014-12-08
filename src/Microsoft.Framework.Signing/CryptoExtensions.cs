@@ -31,7 +31,7 @@ namespace Microsoft.Framework.Signing
             return GetCommonName(self.Name);
         }
 
-        private static string GetCommonName(string dn)
+        public static string GetCommonName(string dn)
         {
             if (dn.StartsWith("CN="))
             {

@@ -10,14 +10,12 @@ namespace Microsoft.Framework.Signing
 {
     public class Signer
     {
-        public string Subject { get; private set; }
         public string Spki { get; private set; }
         public X509Certificate2 SignerCertificate { get; private set; }
         public DateTime? SigningTime { get; private set; }
 
-        private Signer(string subject, string spki, X509Certificate2 signerCertificate, DateTime? signingTime)
+        private Signer(string spki, X509Certificate2 signerCertificate, DateTime? signingTime)
         {
-            Subject = subject;
             Spki = spki;
             SignerCertificate = signerCertificate;
             SigningTime = signingTime;
@@ -38,7 +36,6 @@ namespace Microsoft.Framework.Signing
             }
 
             return new Signer(
-                signerInfo.Certificate.Subject,
                 signerInfo.Certificate.ComputePublicKeyIdentifier(),
                 signerInfo.Certificate,
                 signingTime);

@@ -85,6 +85,17 @@ namespace Microsoft.Framework.Signing.Native
             IntPtr ppTsSigner,
             IntPtr phStore);
 
+        [DllImport("Crypt32.dll", SetLastError = true)]
+        public static extern bool CryptVerifyTimeStampSignature(
+            byte[] pbTSContentInfo,
+            uint cbTSContentInfo,
+            byte[] pbData,
+            uint cbData,
+            IntPtr hAdditionalStore,
+            out IntPtr ppTsContext,
+            IntPtr ppTsSigner,
+            IntPtr phStore);
+
         // http://msdn.microsoft.com/en-us/library/windows/desktop/aa376026(v=vs.85).aspx
         [DllImport("Crypt32.dll", SetLastError = true)]
         public static extern bool CertCloseStore(
@@ -116,6 +127,30 @@ namespace Microsoft.Framework.Signing.Native
         public uint cbEncoded;
         public IntPtr pbEncoded;
         public IntPtr pTimeStamp;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct CRYPT_TIMESTAMP_INFO
+    {
+        public uint dwVersion;
+        public string pszTSAPolicyId;
+        public CRYPT_ALGORITHM_IDENTIFIER HashAlgorithm;
+        public CRYPT_INTEGER_BLOB_INTPTR HashedMessage;
+        public CRYPT_INTEGER_BLOB_INTPTR SerialNumber;
+        public System.Runtime.InteropServices.ComTypes.FILETIME ftTime;
+        public IntPtr pvAccuracy;
+        public bool fOrdering;
+        public CRYPT_INTEGER_BLOB_INTPTR Nonce;
+        public CRYPT_INTEGER_BLOB_INTPTR Tsa;
+        public uint cExtension;
+        public IntPtr rgExtension;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct CRYPT_ALGORITHM_IDENTIFIER
+    {
+        public string pszObjId;
+        public CRYPT_INTEGER_BLOB_INTPTR Parameters;
     }
 
     // http://msdn.microsoft.com/en-us/library/windows/desktop/aa381139(v=vs.85).aspx

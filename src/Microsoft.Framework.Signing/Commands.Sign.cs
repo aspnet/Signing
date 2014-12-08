@@ -68,10 +68,19 @@ namespace Microsoft.Framework.Signing
             // Sign the file
             sig.Sign(signingCert, includedCerts, additionalCerts);
 
-            // Write the signature
-            await sig.WriteAsync(signOptions.Output);
-
             AnsiConsole.Output.WriteLine("Successfully signed.");
+
+            if (!string.IsNullOrEmpty(signOptions.Timestamper))
+            {
+                // Timestamp the signature
+                AnsiConsole.Output.WriteLine("Transmitting signature to timestamping authority...");
+                sig.Timestamp(new Uri(signOptions.Timestamper), signOptions.TimestamperAlgorithm ?? Signature.DefaultDigestAlgorithmName);
+                AnsiConsole.Output.WriteLine("Trusted timestamp applied to signature.");
+            }
+
+            // Write the signature
+            AnsiConsole.Output.WriteLine("Signature saved to " + signOptions.Output);
+            await sig.WriteAsync(signOptions.Output);
 
             return 0;
         }

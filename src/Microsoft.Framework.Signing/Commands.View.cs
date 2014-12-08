@@ -10,8 +10,10 @@ namespace Microsoft.Framework.Signing
 {
     internal static partial class Commands
     {
-        public static async Task<int> View(string signatureFile)
+        public static async Task<int> Verify(string signatureFile, string targetFile, bool checkCertificates, bool skipRevocationCheck)
         {
+            int exitCode = 0;
+
             // Verify the signature
             var sig = await Signature.TryDecodeAsync(signatureFile);
 
@@ -22,41 +24,84 @@ namespace Microsoft.Framework.Signing
             AnsiConsole.Output.WriteLine(" Digest Algorithm: " + sig.Payload.DigestAlgorithm.FriendlyName);
             AnsiConsole.Output.WriteLine(" Digest: " + BitConverter.ToString(sig.Payload.Digest).Replace("-", ""));
 
-            // Check the digest?
-            var payloadFile = Path.Combine(Path.GetDirectoryName(signatureFile), sig.Payload.ContentIdentifier);
-            bool? verified = null;
-            if (File.Exists(payloadFile))
+            // Check the payload?
+            if (string.IsNullOrEmpty(targetFile))
             {
-                verified = sig.Payload.Verify(payloadFile);
+                targetFile = Path.Combine(Path.GetDirectoryName(signatureFile), sig.Payload.ContentIdentifier);
             }
 
-            if (verified == null)
+            if (!File.Exists(targetFile))
             {
-                AnsiConsole.Output.WriteLine(" Unable to locate content file for verification");
+                AnsiConsole.Error.WriteLine(" Unable to locate content file for verification");
+                exitCode = -1;
             }
-            else if (verified == true)
+            else if (sig.Payload.Verify(targetFile))
             {
                 AnsiConsole.Output.WriteLine(" Content file matches signature!");
             }
             else
             {
-                AnsiConsole.Output.WriteLine(" Content file does NOT match signature!");
+                AnsiConsole.Error.WriteLine(" Content file does NOT match signature!");
+                exitCode = -1;
             }
-
-            AnsiConsole.Output.WriteLine("");
 
             // Display the signature data
             if (sig.IsSigned)
             {
+                AnsiConsole.Output.WriteLine("");
                 AnsiConsole.Output.WriteLine("Signer Information:");
                 DumpSigner(sig, sig.Signer);
-            }
-            else
-            {
-                AnsiConsole.Output.WriteLine("Unsigned!");
+
+                if (sig.IsTimestamped)
+                {
+                    AnsiConsole.Output.WriteLine("");
+                    AnsiConsole.Output.WriteLine("Timestamper Information:");
+                    AnsiConsole.Output.WriteLine(" Timestamped At (UTC  ): " + sig.Timestamper.TimestampUtc.ToString("O"));
+                    AnsiConsole.Output.WriteLine(" Timestamped At (Local): " + sig.Timestamper.TimestampUtc.ToLocalTime().ToString("O"));
+                    AnsiConsole.Output.WriteLine(" Policy ID: " + sig.Timestamper.TsaPolicyId);
+                    AnsiConsole.Output.WriteLine(" Hash Algorithm: " + sig.Timestamper.HashAlgorithm);
+                    DumpSigner(sig, sig.Timestamper.Signer);
+                }
             }
 
-            return 0;
+            // Check the certificates against root trust (for now)
+            if (checkCertificates)
+            {
+                AnsiConsole.Output.WriteLine("");
+                AnsiConsole.Output.WriteLine("Signer Chain Status:");
+
+                X509Chain chain = new X509Chain();
+                chain.ChainPolicy.ExtraStore.AddRange(sig.Certificates);
+                if (skipRevocationCheck)
+                {
+                    chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                }
+                if (!chain.Build(sig.Signer.SignerCertificate))
+                {
+                    AnsiConsole.Error.WriteLine(" Signing Certificate is UNTRUSTED");
+                    exitCode = -1;
+                }
+                else
+                {
+                    AnsiConsole.Output.WriteLine(" Signing Certificate is TRUSTED");
+                }
+
+                if (chain.ChainStatus.Length > 0)
+                {
+                    AnsiConsole.Error.WriteLine(" Certificate chain built with the following status messages:");
+                    foreach (var status in chain.ChainStatus)
+                    {
+                        AnsiConsole.Error.WriteLine("  " + status.Status.ToString() + ": " + status.StatusInformation.Trim());
+                    }
+                    exitCode = -1;
+                }
+                else
+                {
+                    AnsiConsole.Output.WriteLine(" Certificate chain built with no issues.");
+                }
+            }
+
+            return exitCode;
         }
 
         private static string GetName(string digestAlgorithm)
@@ -84,11 +129,11 @@ namespace Microsoft.Framework.Signing
         private static void DumpSigner(Signature signature, Signer signer)
         {
             AnsiConsole.Output.WriteLine("  [Subject]");
-            AnsiConsole.Output.WriteLine("    " + signer.Subject);
-            AnsiConsole.Output.WriteLine("  [SPKI]");
-            AnsiConsole.Output.WriteLine("    " + signer.Spki);
+            AnsiConsole.Output.WriteLine("    " + signer.SignerCertificate.Subject);
             AnsiConsole.Output.WriteLine("  [Issuer]");
             AnsiConsole.Output.WriteLine("    " + signer.SignerCertificate.Issuer);
+            AnsiConsole.Output.WriteLine("  [SPKI]");
+            AnsiConsole.Output.WriteLine("    " + signer.Spki);
             AnsiConsole.Output.WriteLine("  [Signing Time]");
             AnsiConsole.Output.WriteLine("    " + (signer.SigningTime?.ToString("O")) ?? "UNKNOWN!");
             AnsiConsole.Output.WriteLine("  [Cert Chain]");
@@ -98,6 +143,7 @@ namespace Microsoft.Framework.Signing
             foreach (var element in chain.ChainElements)
             {
                 AnsiConsole.Output.WriteLine("    " + element.Certificate.Subject);
+                AnsiConsole.Output.WriteLine("      Issued By: " + element.Certificate.IssuerName.CommonName());
                 AnsiConsole.Output.WriteLine("      Status: " + String.Join(", ", element.ChainElementStatus.Select(s => s.Status)));
                 AnsiConsole.Output.WriteLine("      Info:   " + element.Information);
                 AnsiConsole.Output.WriteLine("      SPKI:   " + element.Certificate.ComputePublicKeyIdentifier());

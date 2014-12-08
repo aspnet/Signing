@@ -9,8 +9,6 @@ namespace Microsoft.Framework.Signing.Native
 {
     internal class NativeCms : IDisposable
     {
-        private static readonly Oid SignatureTimeStampTokenAttributeOid = new Oid("1.2.840.113549.1.9.16.2.14");
-
         private SafeCryptMsgHandle _handle;
         private bool _detached;
 
@@ -33,6 +31,11 @@ namespace Microsoft.Framework.Signing.Native
         public byte[] GetEncodedSignerInfo()
         {
             return GetByteArrayAttribute(CMSG_GETPARAM_TYPE.CMSG_ENCODED_SIGNER, index: 0);
+        }
+
+        public byte[] GetContentInfo()
+        {
+            return GetByteArrayAttribute(CMSG_GETPARAM_TYPE.CMSG_CONTENT_PARAM, index: 0);
         }
 
         public void AddCertificates(IEnumerable<byte[]> encodedCertificates)
@@ -98,7 +101,7 @@ namespace Microsoft.Framework.Signing.Native
                 // Wrap it in a CRYPT_ATTRIBUTE and copy that too!
                 var attr = new CRYPT_ATTRIBUTE()
                 {
-                    pszObjId = SignatureTimeStampTokenAttributeOid.Value,
+                    pszObjId = Constants.SignatureTimeStampTokenAttributeOid.Value,
                     cValue = 1,
                     rgValue = unmanagedBlob
                 };

@@ -49,5 +49,44 @@ namespace Microsoft.Framework.Signing.Native
             cms.Decode(encodedResponse);
             return cms;
         }
+
+        internal static TimeStampToken VerifyTimestamp(byte[] data, SignedCms timestampCms)
+        {
+            var signer = Signer.FromSignerInfo(timestampCms.SignerInfos[0]);
+
+            bool trusted = signer.SignerCertificate.Verify();
+
+            var contentInfo = timestampCms.Encode();
+
+            IntPtr unmanagedContext = IntPtr.Zero;
+            try
+            {
+                NativeUtils.ThrowIfFailed(NativeMethods.CryptVerifyTimeStampSignature(
+                    pbTSContentInfo: contentInfo,
+                    cbTSContentInfo: (uint)contentInfo.Length,
+                    pbData: data,
+                    cbData: (uint)data.Length,
+                    hAdditionalStore: IntPtr.Zero,
+                    ppTsContext: out unmanagedContext,
+                    ppTsSigner: IntPtr.Zero,
+                    phStore: IntPtr.Zero));
+
+                // Copy the context out
+                var context = (CRYPT_TIMESTAMP_CONTEXT)Marshal.PtrToStructure(unmanagedContext, typeof(CRYPT_TIMESTAMP_CONTEXT));
+
+                // Copy the info out
+                var info = (CRYPT_TIMESTAMP_INFO)Marshal.PtrToStructure(context.pTimeStamp, typeof(CRYPT_TIMESTAMP_INFO));
+
+                return TimeStampToken.FromTimestampInfo(info, signer, trusted);
+            }
+            finally
+            {
+                if (unmanagedContext != IntPtr.Zero)
+                {
+                    NativeMethods.CryptMemFree(unmanagedContext);
+                }
+            }
+
+        }
     }
 }
