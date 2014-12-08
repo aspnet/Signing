@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using Microsoft.Framework.Asn1;
 
 namespace Microsoft.Framework.Signing.Native
 {
@@ -32,39 +33,6 @@ namespace Microsoft.Framework.Signing.Native
         public byte[] GetEncodedSignerInfo()
         {
             return GetByteArrayAttribute(CMSG_GETPARAM_TYPE.CMSG_ENCODED_SIGNER, index: 0);
-        }
-
-        public IEnumerable<byte[]> GetCertificates()
-        {
-            uint len = sizeof(uint);
-            IntPtr certCountUnmanaged = IntPtr.Zero;
-            int certCount = 0;
-            try
-            {
-                certCountUnmanaged = Marshal.AllocHGlobal(sizeof(uint));
-                if (!NativeMethods.CryptMsgGetParam(
-                    _handle,
-                    CMSG_GETPARAM_TYPE.CMSG_CERT_COUNT_PARAM,
-                    0,
-                    certCountUnmanaged,
-                    ref len))
-                {
-                    Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
-                }
-                certCount = Marshal.ReadInt32(certCountUnmanaged);
-            }
-            finally
-            {
-                NativeUtils.SafeFree(certCountUnmanaged);
-            }
-
-            // Now retrieve the certs
-            List<byte[]> certs = new List<byte[]>(certCount);
-            for (uint i = 0; i < certCount; i++)
-            {
-                certs.Add(GetByteArrayAttribute(CMSG_GETPARAM_TYPE.CMSG_CERT_PARAM, index: i));
-            }
-            return certs;
         }
 
         public void AddCertificates(IEnumerable<byte[]> encodedCertificates)
@@ -115,10 +83,12 @@ namespace Microsoft.Framework.Signing.Native
             try
             {
                 // Wrap the timestamp in a CRYPT_INTEGER_BLOB and copy that to unmanaged memory
-                var blob = new CRYPT_INTEGER_BLOB()
+                unmanagedTimestamp = Marshal.AllocHGlobal(timeStampCms.Length);
+                Marshal.Copy(timeStampCms, 0, unmanagedTimestamp, timeStampCms.Length);
+                var blob = new CRYPT_INTEGER_BLOB_INTPTR()
                 {
                     cbData = (uint)timeStampCms.Length,
-                    pbData = timeStampCms
+                    pbData = unmanagedTimestamp
                 };
                 unmanagedBlob = Marshal.AllocHGlobal(Marshal.SizeOf(blob));
                 Marshal.StructureToPtr(blob, unmanagedBlob, fDeleteOld: false);
@@ -164,18 +134,14 @@ namespace Microsoft.Framework.Signing.Native
                     Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
                 }
 
-                // Bring it back into managed memory, because CRYPT_INTEGER_BLOB uses a managed byte[]
-                byte[] encoded = new byte[encodedLength];
-                Marshal.Copy(unmanagedEncoded, encoded, 0, (int)encodedLength);
-
                 // Create the structure used to add the attribute
                 var addAttr = new CMSG_CTRL_ADD_SIGNER_UNAUTH_ATTR_PARA()
                 {
                     dwSignerIndex = 0,
-                    BLOB = new CRYPT_INTEGER_BLOB()
+                    BLOB = new CRYPT_INTEGER_BLOB_INTPTR()
                     {
                         cbData = encodedLength,
-                        pbData = encoded
+                        pbData = unmanagedEncoded
                     }
                 };
                 addAttr.cbSize = (uint)Marshal.SizeOf(addAttr);
@@ -239,42 +205,24 @@ namespace Microsoft.Framework.Signing.Native
         {
             // Get the length of the attribute
             uint valueLength = 0;
-            if (!NativeMethods.CryptMsgGetParam(
+            NativeUtils.ThrowIfFailed(NativeMethods.CryptMsgGetParam(
                 _handle,
                 param,
                 index,
-                IntPtr.Zero,
-                ref valueLength))
-            {
-                Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
-            }
+                null,
+                ref valueLength));
 
             // Now allocate some memory for it
-            IntPtr unmanagedDigestPointer = IntPtr.Zero;
-            byte[] data;
-            try
-            {
-                unmanagedDigestPointer = Marshal.AllocHGlobal((int)valueLength);
+            byte[] data = new byte[(int)valueLength];
 
-                // Get the actual digest
-                if (!NativeMethods.CryptMsgGetParam(
-                    _handle,
-                    param,
-                    index,
-                    unmanagedDigestPointer,
-                    ref valueLength))
-                {
-                    Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
-                }
+            // Get the actual digest
+            NativeUtils.ThrowIfFailed(NativeMethods.CryptMsgGetParam(
+                _handle,
+                param,
+                index,
+                data,
+                ref valueLength));
 
-                // Pull it in to managed memory and return it
-                data = new byte[valueLength];
-                Marshal.Copy(unmanagedDigestPointer, data, 0, data.Length);
-            }
-            finally
-            {
-                NativeUtils.SafeFree(unmanagedDigestPointer);
-            }
             return data;
         }
     }

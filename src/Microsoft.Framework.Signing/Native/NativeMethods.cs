@@ -45,7 +45,7 @@ namespace Microsoft.Framework.Signing.Native
             SafeCryptMsgHandle hCryptMsg,
             CMSG_GETPARAM_TYPE dwParamType,
             uint dwIndex,
-            IntPtr pvData,
+            byte[] pvData,
             ref uint pcbData);
 
         // http://msdn.microsoft.com/en-us/library/windows/desktop/aa380216(v=vs.85).aspx
@@ -134,7 +134,7 @@ namespace Microsoft.Framework.Signing.Native
     {
         public uint cbSize;
         public uint dwSignerIndex;
-        public CRYPT_INTEGER_BLOB BLOB;
+        public CRYPT_INTEGER_BLOB_INTPTR BLOB;
     }
 
     // http://msdn.microsoft.com/en-us/library/windows/desktop/aa381414(v=vs.85).aspx
@@ -152,6 +152,13 @@ namespace Microsoft.Framework.Signing.Native
                 pbData = data
             };
         }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct CRYPT_INTEGER_BLOB_INTPTR
+    {
+        public uint cbData;
+        public IntPtr pbData;
     }
 
     internal enum CMSG_CONTROL_TYPE : uint

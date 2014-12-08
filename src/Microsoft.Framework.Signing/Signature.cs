@@ -183,7 +183,8 @@ namespace Microsoft.Framework.Signing
             using (var cms = NativeCms.Decode(_signature.Encode(), detached: false))
             {
                 cms.AddTimestamp(timestamp.Encode());
-                newSignature.Decode(cms.Encode());
+                var newSig = cms.Encode();
+                newSignature.Decode(newSig);
             }
 
             // Reset the signature
