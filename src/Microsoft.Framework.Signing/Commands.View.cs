@@ -33,7 +33,7 @@ namespace Microsoft.Framework.Signing
             if (!File.Exists(targetFile))
             {
                 AnsiConsole.Error.WriteLine(" Unable to locate content file for verification");
-                exitCode = -1;
+                exitCode = 1;
             }
             else if (sig.Payload.Verify(targetFile))
             {
@@ -42,7 +42,7 @@ namespace Microsoft.Framework.Signing
             else
             {
                 AnsiConsole.Error.WriteLine(" Content file does NOT match signature!");
-                exitCode = -1;
+                exitCode = 1;
             }
 
             // Display the signature data
@@ -79,7 +79,7 @@ namespace Microsoft.Framework.Signing
                 if (!chain.Build(sig.Signer.SignerCertificate))
                 {
                     AnsiConsole.Error.WriteLine(" Signing Certificate is UNTRUSTED");
-                    exitCode = -1;
+                    exitCode = 1;
                 }
                 else
                 {
@@ -93,7 +93,7 @@ namespace Microsoft.Framework.Signing
                     {
                         AnsiConsole.Error.WriteLine("  " + status.Status.ToString() + ": " + status.StatusInformation.Trim());
                     }
-                    exitCode = -1;
+                    exitCode = 1;
                 }
                 else
                 {

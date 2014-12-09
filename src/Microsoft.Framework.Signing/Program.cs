@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.Framework.Asn1;
+using Microsoft.Framework.Runtime;
 using Microsoft.Framework.Runtime.Common.CommandLine;
 using Microsoft.Framework.Signing.Native;
 
@@ -21,6 +22,12 @@ namespace Microsoft.Framework.Signing
             "http://tsa.starfieldtech.com/"
         };
 
+        private IApplicationEnvironment _env;
+
+        public Program(IApplicationEnvironment env) {
+            _env = env;
+        }
+
         public int Main(string[] args)
         {
 #if NET45 || ASPNET50
@@ -32,7 +39,10 @@ namespace Microsoft.Framework.Signing
 #endif
 
             var app = new CommandLineApplication(throwOnUnexpectedArg: false);
+            app.Name = "ksigntool";
+            app.Description = "Signing tool for NuGet/ASP.Net 5 Packages";
             app.HelpOption("-h|--help");
+            app.VersionOption("-v|--version", String.Format("{0} {1} (Runtime: {2}; Configuration: {3})", app.Name, _env.Version, _env.RuntimeFramework, _env.Configuration));
 
             app.Command("sigreq", sigreq =>
             {

@@ -16,7 +16,7 @@ namespace Microsoft.Framework.Signing
             if (File.Exists(outputFile))
             {
                 AnsiConsole.Error.WriteLine("Signature request already exists: " + outputFile);
-                return -1;
+                return 1;
             }
 
             // Create the signature

@@ -19,7 +19,7 @@ namespace Microsoft.Framework.Signing
             if (signingCert == null)
             {
                 AnsiConsole.Error.WriteLine("Unable to find certificate that meets the specified criteria");
-                return -1;
+                return 1;
             }
             AnsiConsole.Output.WriteLine("Signing file with: " + signingCert.SubjectName.CommonName());
 
@@ -39,7 +39,7 @@ namespace Microsoft.Framework.Signing
             if (!signingCert.HasPrivateKey)
             {
                 AnsiConsole.Error.WriteLine("Unable to find private key for certificate: " + signingCert.SubjectName.CommonName());
-                return -1;
+                return 1;
             }
 
             // If the input file didn't provide any additional certs, set up a new collection
@@ -62,7 +62,7 @@ namespace Microsoft.Framework.Signing
             if (sig.IsSigned)
             {
                 AnsiConsole.Error.WriteLine("File already signed: " + fileName);
-                return -1;
+                return 1;
             }
 
             // Sign the file

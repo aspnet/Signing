@@ -1,6 +1,7 @@
 ﻿{
-    "version": "1.0.0-*",
+    "version": "0.1.0-*",
     "dependencies": {
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
         "Microsoft.Framework.CommandLineUtils": "",
         "Microsoft.Framework.Asn1": ""
     },
@@ -12,12 +13,6 @@
 
     "frameworks": {
         "aspnet50": {
-            "frameworkAssemblies": {
-                "System.Security": "",
-                "System.Net.Http": ""
-            }
-        },
-        "net45": {
             "frameworkAssemblies": {
                 "System.Security": "",
                 "System.Net.Http": ""
