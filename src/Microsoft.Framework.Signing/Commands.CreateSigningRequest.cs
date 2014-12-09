@@ -10,7 +10,7 @@ namespace Microsoft.Framework.Signing
         public static async Task<int> CreateSigningRequest(string fileName, string outputFile, string digestAlgorithm)
         {
             // Set default values
-            outputFile = outputFile ?? (fileName + ".sig");
+            outputFile = outputFile ?? (fileName + ".req");
             digestAlgorithm = digestAlgorithm ?? Signature.DefaultDigestAlgorithmName;
 
             if (File.Exists(outputFile))

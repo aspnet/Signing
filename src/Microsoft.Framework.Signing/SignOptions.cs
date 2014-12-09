@@ -149,9 +149,9 @@ namespace Microsoft.Framework.Signing
             }
             if (string.IsNullOrEmpty(opts.Output))
             {
-                if (string.Equals(Path.GetExtension(fileName), ".sig", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(Path.GetExtension(fileName), ".req", StringComparison.OrdinalIgnoreCase))
                 {
-                    opts.Output = fileName;
+                    opts.Output = Path.ChangeExtension(fileName, ".sig");
                 }
                 else
                 {

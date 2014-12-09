@@ -16,10 +16,10 @@ namespace Microsoft.Framework.Signing
     {
         public static readonly string DefaultDigestAlgorithmName = "sha256";
 
-        private static readonly string SignatureRequestPemHeader = "BEGIN SIGNATURE REQUEST";
-        private static readonly string SignatureRequestPemFooter = "END SIGNATURE REQUEST";
-        private static readonly string SignaturePemHeader = "BEGIN SIGNATURE";
-        private static readonly string SignaturePemFooter = "END SIGNATURE";
+        private static readonly string SignatureRequestPemHeader = "BEGIN FILE SIGNING REQUEST";
+        private static readonly string SignatureRequestPemFooter = "END FILE SIGNING REQUEST";
+        private static readonly string SignaturePemHeader = "BEGIN FILE SIGNATURE";
+        private static readonly string SignaturePemFooter = "END FILE SIGNATURE";
 
         private byte[] _encryptedDigest = null;
         private SignedCms _signature = null;
