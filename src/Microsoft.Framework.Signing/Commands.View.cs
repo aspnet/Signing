@@ -100,7 +100,6 @@ namespace Microsoft.Framework.Signing
                     AnsiConsole.Output.WriteLine(" Certificate chain built with no issues.");
                 }
             }
-
             return exitCode;
         }
 
@@ -134,6 +133,8 @@ namespace Microsoft.Framework.Signing
             AnsiConsole.Output.WriteLine("    " + signer.SignerCertificate.Issuer);
             AnsiConsole.Output.WriteLine("  [SPKI]");
             AnsiConsole.Output.WriteLine("    " + signer.Spki);
+            AnsiConsole.Output.WriteLine("  [Signature Algorithm]");
+            AnsiConsole.Output.WriteLine("    " + signer.SignerCertificate.SignatureAlgorithm.FriendlyName);
             AnsiConsole.Output.WriteLine("  [Signing Time]");
             AnsiConsole.Output.WriteLine("    " + (signer.SigningTime?.ToString("O")) ?? "UNKNOWN!");
             AnsiConsole.Output.WriteLine("  [Cert Chain]");

@@ -6,10 +6,17 @@
     },
 
     "commands": {
-        "run": "run"
+        "run": "run",
+        "ksigntool": "run"
     },
 
     "frameworks": {
+        "aspnet50": {
+            "frameworkAssemblies": {
+                "System.Security": "",
+                "System.Net.Http": ""
+            }
+        },
         "net45": {
             "frameworkAssemblies": {
                 "System.Security": "",

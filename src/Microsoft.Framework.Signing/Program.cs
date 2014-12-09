@@ -21,7 +21,7 @@ namespace Microsoft.Framework.Signing
             "http://tsa.starfieldtech.com/"
         };
 
-        public void Main(string[] args)
+        public int Main(string[] args)
         {
 #if NET45 || ASPNET50
             if (args.Length > 0 && string.Equals(args[0], "dbg", StringComparison.OrdinalIgnoreCase))
@@ -109,7 +109,7 @@ namespace Microsoft.Framework.Signing
             }, addHelpCommand: false);
             app.OnExecute(() => { app.ShowHelp(commandName: null); return 0; });
 
-            app.Execute(args);
+            return app.Execute(args);
         }
     }
 }
