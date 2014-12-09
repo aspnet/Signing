@@ -37,11 +37,11 @@ namespace Microsoft.Framework.Signing
             }
             else if (sig.Payload.Verify(targetFile))
             {
-                AnsiConsole.Output.WriteLine(" Content file matches signature!");
+                AnsiConsole.Output.WriteLine(" Content file matches digest!");
             }
             else
             {
-                AnsiConsole.Error.WriteLine(" Content file does NOT match signature!");
+                AnsiConsole.Error.WriteLine(" Content file does NOT match digest!");
                 exitCode = 1;
             }
 
