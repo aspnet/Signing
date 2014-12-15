@@ -1,12 +1,12 @@
 ﻿{
     "version": "1.0.0-*",
     "dependencies": {
-        "Xunit.KRunner": "1.0.0-*",
+        "xunit.runner.kre": "1.0.0-*",
         "Microsoft.Framework.Asn1": ""
     },
 
     "commands": {
-        "test": "Xunit.KRunner"
+        "test": "xunit.runner.kre"
     },
 
     "frameworks" : {
