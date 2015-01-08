@@ -62,43 +62,49 @@ namespace Microsoft.Framework.Signing
                     AnsiConsole.Output.WriteLine(" Hash Algorithm: " + sig.Timestamper.HashAlgorithm);
                     DumpSigner(sig, sig.Timestamper.Signer);
                 }
-            }
 
-            // Check the certificates against root trust (for now)
-            if (checkCertificates)
-            {
-                AnsiConsole.Output.WriteLine("");
-                AnsiConsole.Output.WriteLine("Signer Chain Status:");
+                // Check the certificates against root trust (for now)
+                if (checkCertificates)
+                {
+                    AnsiConsole.Output.WriteLine("");
+                    AnsiConsole.Output.WriteLine("Signer Chain Status:");
 
-                X509Chain chain = new X509Chain();
-                chain.ChainPolicy.ExtraStore.AddRange(sig.Certificates);
-                if (skipRevocationCheck)
-                {
-                    chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-                }
-                if (!chain.Build(sig.Signer.SignerCertificate))
-                {
-                    AnsiConsole.Error.WriteLine(" Signing Certificate is UNTRUSTED");
-                    exitCode = 1;
-                }
-                else
-                {
-                    AnsiConsole.Output.WriteLine(" Signing Certificate is TRUSTED");
-                }
-
-                if (chain.ChainStatus.Length > 0)
-                {
-                    AnsiConsole.Error.WriteLine(" Certificate chain built with the following status messages:");
-                    foreach (var status in chain.ChainStatus)
+                    X509Chain chain = new X509Chain();
+                    chain.ChainPolicy.ExtraStore.AddRange(sig.Certificates);
+                    if (skipRevocationCheck)
                     {
-                        AnsiConsole.Error.WriteLine("  " + status.Status.ToString() + ": " + status.StatusInformation.Trim());
+                        chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
                     }
-                    exitCode = 1;
+                    if (!chain.Build(sig.Signer.SignerCertificate))
+                    {
+                        AnsiConsole.Error.WriteLine(" Signing Certificate is UNTRUSTED");
+                        exitCode = 1;
+                    }
+                    else
+                    {
+                        AnsiConsole.Output.WriteLine(" Signing Certificate is TRUSTED");
+                    }
+
+                    if (chain.ChainStatus.Length > 0)
+                    {
+                        AnsiConsole.Error.WriteLine(" Certificate chain built with the following status messages:");
+                        foreach (var status in chain.ChainStatus)
+                        {
+                            AnsiConsole.Error.WriteLine("  " + status.Status.ToString() + ": " + status.StatusInformation.Trim());
+                        }
+                        exitCode = 1;
+                    }
+                    else
+                    {
+                        AnsiConsole.Output.WriteLine(" Certificate chain built with no issues.");
+                    }
                 }
-                else
-                {
-                    AnsiConsole.Output.WriteLine(" Certificate chain built with no issues.");
-                }
+            }
+            else
+            {
+                AnsiConsole.Error.WriteLine("");
+                AnsiConsole.Error.WriteLine("NO signature found");
+                exitCode = 2;
             }
             return exitCode;
         }

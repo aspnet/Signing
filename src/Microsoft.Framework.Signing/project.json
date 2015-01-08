@@ -1,5 +1,5 @@
 ﻿{
-    "version": "0.1.0-*",
+    "version": "0.2.1-*",
     "dependencies": {
         "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
         "Microsoft.Framework.CommandLineUtils": "",

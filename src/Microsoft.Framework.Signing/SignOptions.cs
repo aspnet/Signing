@@ -149,10 +149,19 @@ namespace Microsoft.Framework.Signing
             }
             if (string.IsNullOrEmpty(opts.Output))
             {
-                if (string.Equals(Path.GetExtension(fileName), ".req", StringComparison.OrdinalIgnoreCase))
+                var extension = Path.GetExtension(fileName);
+
+                // If the file is a signature request, change the extension
+                if (string.Equals(extension, ".req", StringComparison.OrdinalIgnoreCase))
                 {
                     opts.Output = Path.ChangeExtension(fileName, ".sig");
                 }
+                // Sometimes, we save signatures requests as ".sig" files, in those cases we replace the file in-place
+                else if (string.Equals(extension, ".sig", StringComparison.OrdinalIgnoreCase))
+                {
+                    opts.Output = fileName;
+                }
+                // Otherwise, tack on ".sig" for the signature file
                 else
                 {
                     opts.Output = fileName + ".sig";

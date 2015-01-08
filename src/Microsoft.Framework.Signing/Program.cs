@@ -15,13 +15,6 @@ namespace Microsoft.Framework.Signing
 {
     public class Program
     {
-        private static readonly IList<string> TimestampServers = new List<string>()
-        {
-            "http://timestamp.digicert.com",
-            "http://timestamp.comodoca.com/authenticode",
-            "http://tsa.starfieldtech.com/"
-        };
-
         private IApplicationEnvironment _env;
 
         public Program(IApplicationEnvironment env) {
