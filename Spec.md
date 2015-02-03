@@ -1,6 +1,6 @@
 # Package Signing Specification
 
-**IMPORTANT**: This is a working specification and may change over time. Please leave your comments in the issues section of the [CodeSigning](https://github.com/aspnet/CodeSigning) repository.
+**IMPORTANT**: This is a working specification and may change over time. Please leave your comments in the issues section of the [Signing](https://github.com/aspnet/Signing) repository.
 
 **ALSO**: While this work is taking place in the aspnet organization on GitHub, we expect to merge it with NuGet.
 
