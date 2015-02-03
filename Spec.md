@@ -257,7 +257,7 @@ In order to support this feature, changes must be made to the listing of install
 
 ### project.json
 
-In ASP.NET 5 and .NET Cross-Platform Console Applications/Class Libraries, a `project.json` file is used in place of packages.config. When signer data needs to be encoded in this file, it is encoded as follows:
+In ASP.NET 5, a `project.json` file is used in place of packages.config. When signer data needs to be encoded in this file, it is encoded as follows:
 
 ```json
 {
