@@ -7,7 +7,7 @@ namespace Microsoft.Framework.Signing
 {
     public class TimeStampToken
     {
-        private TimeStampToken(int version, string tsaPolicyId, string hashAlgorithm, byte[] hashedMessage, DateTime timestampUtc, bool ordered, Signer signer, bool isTrusted)
+        private TimeStampToken(int version, string tsaPolicyId, string hashAlgorithm, byte[] hashedMessage, DateTime timestampUtc, bool ordered, Signatory signer, bool isTrusted)
         {
             Version = version;
             TsaPolicyId = tsaPolicyId;
@@ -15,7 +15,7 @@ namespace Microsoft.Framework.Signing
             HashedMessage = hashedMessage;
             TimestampUtc = timestampUtc;
             Ordered = ordered;
-            Signer = signer;
+            Signatory = signer;
             IsTrusted = isTrusted;
         }
 
@@ -26,9 +26,9 @@ namespace Microsoft.Framework.Signing
         public byte[] HashedMessage { get; }
         public DateTime TimestampUtc { get; }
         public bool Ordered { get; }
-        public Signer Signer { get; }
+        public Signatory Signatory { get; }
 
-        internal static TimeStampToken FromTimestampInfo(CRYPT_TIMESTAMP_INFO info, Signer signer, bool trusted)
+        internal static TimeStampToken FromTimestampInfo(CRYPT_TIMESTAMP_INFO info, Signatory signer, bool trusted)
         {
             string hashAlgorithm;
             try

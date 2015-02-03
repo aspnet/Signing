@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" InitialTargets="ValidateSolutionConfiguration;ValidateToolsVersions;ValidateProjects">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\SolutionFile\ImportBefore\*" Condition="'$(ImportByWildcardBeforeSolution)' != 'false' and exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\SolutionFile\ImportBefore')" />
-  <Import Project="C:\Code\Git\aspnet\CodeSigning\before.CodeSigning.sln.targets" Condition="exists('C:\Code\Git\aspnet\CodeSigning\before.CodeSigning.sln.targets')" />
+  <Import Project="C:\Code\Git\aspnet\Signing\before.Signing.sln.targets" Condition="exists('C:\Code\Git\aspnet\Signing\before.Signing.sln.targets')" />
   <PropertyGroup Condition=" '$(Configuration)' == '' ">
     <Configuration>Debug</Configuration>
   </PropertyGroup>
@@ -12,11 +12,11 @@
     <AspNetConfiguration>$(Configuration)</AspNetConfiguration>
   </PropertyGroup>
   <PropertyGroup>
-    <SolutionDir>C:\Code\Git\aspnet\CodeSigning\</SolutionDir>
+    <SolutionDir>C:\Code\Git\aspnet\Signing\</SolutionDir>
     <SolutionExt>.sln</SolutionExt>
-    <SolutionFileName>CodeSigning.sln</SolutionFileName>
-    <SolutionName>CodeSigning</SolutionName>
-    <SolutionPath>C:\Code\Git\aspnet\CodeSigning\CodeSigning.sln</SolutionPath>
+    <SolutionFileName>Signing.sln</SolutionFileName>
+    <SolutionName>Signing</SolutionName>
+    <SolutionPath>C:\Code\Git\aspnet\Signing\Signing.sln</SolutionPath>
   </PropertyGroup>
   <PropertyGroup>
     <TargetFrameworkVersion Condition="'$(TargetFrameworkVersion)' == '' and '$(MSBuildToolsVersion)' == '2.0'">v2.0</TargetFrameworkVersion>
@@ -26,8 +26,8 @@
   <PropertyGroup Condition=" ('$(Configuration)' == 'Debug') and ('$(Platform)' == 'Any CPU') ">
     <CurrentSolutionConfigurationContents>
       <SolutionConfiguration xmlns="">
-  <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\aspnet\CodeSigning\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
-  <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\aspnet\CodeSigning\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\aspnet\Signing\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\aspnet\Signing\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
 </SolutionConfiguration>
     </CurrentSolutionConfigurationContents>
   </PropertyGroup>
@@ -37,8 +37,8 @@
       <Platform>Any CPU</Platform>
       <Content>
         <SolutionConfiguration xmlns="">
-  <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\aspnet\CodeSigning\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
-  <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\aspnet\CodeSigning\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\aspnet\Signing\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\aspnet\Signing\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
 </SolutionConfiguration>
       </Content>
     </SolutionConfiguration>
@@ -47,8 +47,8 @@
       <Platform>Any CPU</Platform>
       <Content>
         <SolutionConfiguration xmlns="">
-  <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\aspnet\CodeSigning\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
-  <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\aspnet\CodeSigning\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\aspnet\Signing\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\aspnet\Signing\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
 </SolutionConfiguration>
       </Content>
     </SolutionConfiguration>
@@ -56,13 +56,13 @@
   <PropertyGroup Condition=" ('$(Configuration)' == 'Release') and ('$(Platform)' == 'Any CPU') ">
     <CurrentSolutionConfigurationContents>
       <SolutionConfiguration xmlns="">
-  <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\aspnet\CodeSigning\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
-  <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\aspnet\CodeSigning\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\aspnet\Signing\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\aspnet\Signing\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
 </SolutionConfiguration>
     </CurrentSolutionConfigurationContents>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\SolutionFile\ImportAfter\*" Condition="'$(ImportByWildcardBeforeSolution)' != 'false' and exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\SolutionFile\ImportAfter')" />
-  <Import Project="C:\Code\Git\aspnet\CodeSigning\after.CodeSigning.sln.targets" Condition="exists('C:\Code\Git\aspnet\CodeSigning\after.CodeSigning.sln.targets')" />
+  <Import Project="C:\Code\Git\aspnet\Signing\after.Signing.sln.targets" Condition="exists('C:\Code\Git\aspnet\Signing\after.Signing.sln.targets')" />
   <Target Name="Build" />
   <Target Name="Rebuild" />
   <Target Name="Clean" />

@@ -50,17 +50,17 @@ namespace Microsoft.Framework.Signing
             {
                 AnsiConsole.Output.WriteLine("");
                 AnsiConsole.Output.WriteLine("Signer Information:");
-                DumpSigner(sig, sig.Signer);
+                DumpSigner(sig, sig.Signatory);
 
                 if (sig.IsTimestamped)
                 {
                     AnsiConsole.Output.WriteLine("");
                     AnsiConsole.Output.WriteLine("Timestamper Information:");
-                    AnsiConsole.Output.WriteLine(" Timestamped At (UTC  ): " + sig.Timestamper.TimestampUtc.ToString("O"));
-                    AnsiConsole.Output.WriteLine(" Timestamped At (Local): " + sig.Timestamper.TimestampUtc.ToLocalTime().ToString("O"));
-                    AnsiConsole.Output.WriteLine(" Policy ID: " + sig.Timestamper.TsaPolicyId);
-                    AnsiConsole.Output.WriteLine(" Hash Algorithm: " + sig.Timestamper.HashAlgorithm);
-                    DumpSigner(sig, sig.Timestamper.Signer);
+                    AnsiConsole.Output.WriteLine(" Timestamped At (UTC  ): " + sig.Timestamp.TimestampUtc.ToString("O"));
+                    AnsiConsole.Output.WriteLine(" Timestamped At (Local): " + sig.Timestamp.TimestampUtc.ToLocalTime().ToString("O"));
+                    AnsiConsole.Output.WriteLine(" Policy ID: " + sig.Timestamp.TsaPolicyId);
+                    AnsiConsole.Output.WriteLine(" Hash Algorithm: " + sig.Timestamp.HashAlgorithm);
+                    DumpSigner(sig, sig.Timestamp.Signatory);
                 }
 
                 // Check the certificates against root trust (for now)
@@ -75,7 +75,7 @@ namespace Microsoft.Framework.Signing
                     {
                         chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
                     }
-                    if (!chain.Build(sig.Signer.SignerCertificate))
+                    if (!chain.Build(sig.Signatory.SignerCertificate))
                     {
                         AnsiConsole.Error.WriteLine(" Signing Certificate is UNTRUSTED");
                         exitCode = 1;
@@ -131,7 +131,7 @@ namespace Microsoft.Framework.Signing
 #endif
         }
 
-        private static void DumpSigner(Signature signature, Signer signer)
+        private static void DumpSigner(Signature signature, Signatory signer)
         {
             AnsiConsole.Output.WriteLine("  [Subject]");
             AnsiConsole.Output.WriteLine("    " + signer.SignerCertificate.Subject);

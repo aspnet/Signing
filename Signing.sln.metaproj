@@ -8,16 +8,16 @@
     <MSBuildRuntimeVersion>4.0.30319</MSBuildRuntimeVersion>
     <SDK40ToolsPath />
     <AspNetConfiguration>Debug</AspNetConfiguration>
-    <SolutionDir>C:\Code\Git\aspnet\CodeSigning\</SolutionDir>
+    <SolutionDir>C:\Code\Git\aspnet\Signing\</SolutionDir>
     <SolutionExt>.sln</SolutionExt>
-    <SolutionFileName>CodeSigning.sln</SolutionFileName>
-    <SolutionName>CodeSigning</SolutionName>
-    <SolutionPath>C:\Code\Git\aspnet\CodeSigning\CodeSigning.sln</SolutionPath>
+    <SolutionFileName>Signing.sln</SolutionFileName>
+    <SolutionName>Signing</SolutionName>
+    <SolutionPath>C:\Code\Git\aspnet\Signing\Signing.sln</SolutionPath>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <CurrentSolutionConfigurationContents>
       <SolutionConfiguration xmlns="">
-  <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\aspnet\CodeSigning\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
-  <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\aspnet\CodeSigning\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\aspnet\Signing\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\aspnet\Signing\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
 </SolutionConfiguration>
     </CurrentSolutionConfigurationContents>
   </PropertyGroup>
@@ -28,8 +28,8 @@
       <Platform>Any CPU</Platform>
       <Content>
         <SolutionConfiguration xmlns="">
-  <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\aspnet\CodeSigning\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
-  <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\aspnet\CodeSigning\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\aspnet\Signing\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\aspnet\Signing\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Debug|AnyCPU</ProjectConfiguration>
 </SolutionConfiguration>
       </Content>
     </SolutionConfiguration>
@@ -38,14 +38,14 @@
       <Platform>Any CPU</Platform>
       <Content>
         <SolutionConfiguration xmlns="">
-  <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\aspnet\CodeSigning\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
-  <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\aspnet\CodeSigning\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{ECF5388F-01D0-43BE-8873-41D094CE84B9}" AbsolutePath="C:\Code\Git\aspnet\Signing\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
+  <ProjectConfiguration Project="{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}" AbsolutePath="C:\Code\Git\aspnet\Signing\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj" BuildProjectInSolution="True">Release|AnyCPU</ProjectConfiguration>
 </SolutionConfiguration>
       </Content>
     </SolutionConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="C:\Code\Git\aspnet\CodeSigning\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj">
+    <ProjectReference Include="C:\Code\Git\aspnet\Signing\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj">
       <ToolsVersion>
       </ToolsVersion>
       <SkipNonexistentProjects>False</SkipNonexistentProjects>
@@ -53,7 +53,7 @@
       <Configuration>Debug</Configuration>
       <Platform>AnyCPU</Platform>
     </ProjectReference>
-    <ProjectReference Include="C:\Code\Git\aspnet\CodeSigning\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj">
+    <ProjectReference Include="C:\Code\Git\aspnet\Signing\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj">
       <ToolsVersion>
       </ToolsVersion>
       <SkipNonexistentProjects>False</SkipNonexistentProjects>
@@ -89,35 +89,35 @@
     <MSBuild Projects="@(ProjectReference)" Targets="Publish" BuildInParallel="True" Properties="BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)" SkipNonexistentProjects="%(ProjectReference.SkipNonexistentProjects)" />
   </Target>
   <Target Name="src\Microsoft_Framework_Signing" Outputs="@(src_Microsoft_Framework_SigningBuildOutput)">
-    <MSBuild Condition="'%(ProjectReference.Identity)' == 'C:\Code\Git\aspnet\CodeSigning\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj'" Projects="@(ProjectReference)" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Debug; Platform=AnyCPU;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)">
+    <MSBuild Condition="'%(ProjectReference.Identity)' == 'C:\Code\Git\aspnet\Signing\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj'" Projects="@(ProjectReference)" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Debug; Platform=AnyCPU;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)">
       <Output TaskParameter="TargetOutputs" ItemName="src_Microsoft_Framework_SigningBuildOutput" />
     </MSBuild>
   </Target>
   <Target Name="src\Microsoft_Framework_Signing:Clean">
-    <MSBuild Condition="'%(ProjectReference.Identity)' == 'C:\Code\Git\aspnet\CodeSigning\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj'" Projects="@(ProjectReference)" Targets="Clean" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Debug; Platform=AnyCPU;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)" />
+    <MSBuild Condition="'%(ProjectReference.Identity)' == 'C:\Code\Git\aspnet\Signing\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj'" Projects="@(ProjectReference)" Targets="Clean" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Debug; Platform=AnyCPU;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)" />
   </Target>
   <Target Name="src\Microsoft_Framework_Signing:Rebuild" Outputs="@(src_Microsoft_Framework_SigningBuildOutput)">
-    <MSBuild Condition="'%(ProjectReference.Identity)' == 'C:\Code\Git\aspnet\CodeSigning\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj'" Projects="@(ProjectReference)" Targets="Rebuild" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Debug; Platform=AnyCPU;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)">
+    <MSBuild Condition="'%(ProjectReference.Identity)' == 'C:\Code\Git\aspnet\Signing\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj'" Projects="@(ProjectReference)" Targets="Rebuild" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Debug; Platform=AnyCPU;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)">
       <Output TaskParameter="TargetOutputs" ItemName="src_Microsoft_Framework_SigningBuildOutput" />
     </MSBuild>
   </Target>
   <Target Name="src\Microsoft_Framework_Signing:Publish">
-    <MSBuild Condition="'%(ProjectReference.Identity)' == 'C:\Code\Git\aspnet\CodeSigning\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj'" Projects="@(ProjectReference)" Targets="Publish" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Debug; Platform=AnyCPU;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)" />
+    <MSBuild Condition="'%(ProjectReference.Identity)' == 'C:\Code\Git\aspnet\Signing\src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.kproj'" Projects="@(ProjectReference)" Targets="Publish" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Debug; Platform=AnyCPU;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)" />
   </Target>
   <Target Name="test\Microsoft_Framework_Signing_Test" Outputs="@(test_Microsoft_Framework_Signing_TestBuildOutput)">
-    <MSBuild Condition="'%(ProjectReference.Identity)' == 'C:\Code\Git\aspnet\CodeSigning\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj'" Projects="@(ProjectReference)" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Debug; Platform=AnyCPU;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)">
+    <MSBuild Condition="'%(ProjectReference.Identity)' == 'C:\Code\Git\aspnet\Signing\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj'" Projects="@(ProjectReference)" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Debug; Platform=AnyCPU;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)">
       <Output TaskParameter="TargetOutputs" ItemName="test_Microsoft_Framework_Signing_TestBuildOutput" />
     </MSBuild>
   </Target>
   <Target Name="test\Microsoft_Framework_Signing_Test:Clean">
-    <MSBuild Condition="'%(ProjectReference.Identity)' == 'C:\Code\Git\aspnet\CodeSigning\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj'" Projects="@(ProjectReference)" Targets="Clean" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Debug; Platform=AnyCPU;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)" />
+    <MSBuild Condition="'%(ProjectReference.Identity)' == 'C:\Code\Git\aspnet\Signing\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj'" Projects="@(ProjectReference)" Targets="Clean" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Debug; Platform=AnyCPU;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)" />
   </Target>
   <Target Name="test\Microsoft_Framework_Signing_Test:Rebuild" Outputs="@(test_Microsoft_Framework_Signing_TestBuildOutput)">
-    <MSBuild Condition="'%(ProjectReference.Identity)' == 'C:\Code\Git\aspnet\CodeSigning\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj'" Projects="@(ProjectReference)" Targets="Rebuild" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Debug; Platform=AnyCPU;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)">
+    <MSBuild Condition="'%(ProjectReference.Identity)' == 'C:\Code\Git\aspnet\Signing\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj'" Projects="@(ProjectReference)" Targets="Rebuild" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Debug; Platform=AnyCPU;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)">
       <Output TaskParameter="TargetOutputs" ItemName="test_Microsoft_Framework_Signing_TestBuildOutput" />
     </MSBuild>
   </Target>
   <Target Name="test\Microsoft_Framework_Signing_Test:Publish">
-    <MSBuild Condition="'%(ProjectReference.Identity)' == 'C:\Code\Git\aspnet\CodeSigning\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj'" Projects="@(ProjectReference)" Targets="Publish" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Debug; Platform=AnyCPU;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)" />
+    <MSBuild Condition="'%(ProjectReference.Identity)' == 'C:\Code\Git\aspnet\Signing\test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.kproj'" Projects="@(ProjectReference)" Targets="Publish" BuildInParallel="True" ToolsVersion="$(ProjectToolsVersion)" Properties="Configuration=Debug; Platform=AnyCPU;BuildingSolutionFile=true; CurrentSolutionConfigurationContents=$(CurrentSolutionConfigurationContents); SolutionDir=$(SolutionDir); SolutionExt=$(SolutionExt); SolutionFileName=$(SolutionFileName); SolutionName=$(SolutionName); SolutionPath=$(SolutionPath)" />
   </Target>
 </Project>

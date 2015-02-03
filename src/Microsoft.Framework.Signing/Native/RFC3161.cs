@@ -52,7 +52,7 @@ namespace Microsoft.Framework.Signing.Native
 
         internal static TimeStampToken VerifyTimestamp(byte[] data, SignedCms timestampCms)
         {
-            var signer = Signer.FromSignerInfo(timestampCms.SignerInfos[0]);
+            var signer = Signatory.FromSignerInfo(timestampCms.SignerInfos[0]);
 
             bool trusted = signer.SignerCertificate.Verify();
 

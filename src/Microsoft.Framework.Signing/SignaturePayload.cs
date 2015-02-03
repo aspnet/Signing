@@ -66,31 +66,6 @@ namespace Microsoft.Framework.Signing
             return Asn1Utils.EncodePayload(this);
         }
 
-        public static SignaturePayload Compute(string fileName, string digestAlgorithm)
-        {
-            using (var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.None))
-            {
-                return Compute(Path.GetFileName(fileName), stream, digestAlgorithm);
-            }
-        }
-
-        public static SignaturePayload Compute(string contentIdentifier, byte[] input, string digestAlgorithm)
-        {
-            using (var stream = new MemoryStream(input))
-            {
-                return Compute(contentIdentifier, stream, digestAlgorithm);
-            }
-        }
-
-        public static SignaturePayload Compute(string contentIdentifier, Stream input, string digestAlgorithm)
-        {
-            var algorithm = HashAlgorithm.Create(digestAlgorithm);
-            var oid = CryptoConfig.MapNameToOID(digestAlgorithm);
-
-            var digest = algorithm.ComputeHash(input);
-            return new SignaturePayload(contentIdentifier, new Oid(oid), digest);
-        }
-
         public static SignaturePayload Decode(byte[] content)
         {
             var result = Asn1Utils.TryDecodePayload(content);

@@ -28,20 +28,15 @@ namespace Microsoft.Framework.Signing
         public bool IsTimestamped { get { return _timestamp != null; } }
 
         public SignaturePayload Payload { get; private set; }
-        public Signer Signer { get; private set; }
-        public TimeStampToken Timestamper { get { return _timestamp; } }
+        public Signatory Signatory { get; private set; }
+        public TimeStampToken Timestamp { get { return _timestamp; } }
         public X509Certificate2Collection Certificates { get { return _signature?.Certificates; } }
 
         public DateTime? TrustedSigningTimeUtc { get; private set; }
 
-        /// <summary>
-        /// Constructs a new signature request for the specified file
-        /// </summary>
-        /// <param name="payload">A signature entry describing the file to create a signature request for</param>
-        /// <remarks>
-        /// Until <see cref="Sign"/> is called, this structure represents a signature request.
-        /// </remarks>
-        public Signature(SignaturePayload payload)
+        protected internal byte[] EncryptedDigest { get { return _encryptedDigest; } }
+
+        internal Signature(SignaturePayload payload)
         {
             Payload = payload;
         }
@@ -70,6 +65,35 @@ namespace Microsoft.Framework.Signing
                     header: SignaturePemHeader,
                     data: _signature.Encode(),
                     footer: SignaturePemFooter).Encode();
+            }
+        }
+
+        protected internal virtual void SetSignature(SignedCms cms)
+        {
+            TrustedSigningTimeUtc = null;
+            Payload = SignaturePayload.Decode(cms.ContentInfo.Content);
+            _signature = cms;
+
+            // Load the encrypted digest using the native APIs
+            using (var nativeCms = NativeCms.Decode(cms.Encode(), detached: false))
+            {
+                _encryptedDigest = nativeCms.GetEncryptedDigest();
+            }
+
+            var signerInfo = cms.SignerInfos.Cast<SignerInfo>().FirstOrDefault();
+            if (signerInfo != null)
+            {
+                Signatory = Signatory.FromSignerInfo(signerInfo);
+            }
+        }
+
+        protected internal virtual void SetTimestamp(TimeStampToken token)
+        {
+            _timestamp = token;
+
+            if (_timestamp.IsTrusted)
+            {
+                TrustedSigningTimeUtc = _timestamp.TimestampUtc;
             }
         }
 
@@ -138,183 +162,6 @@ namespace Microsoft.Framework.Signing
             {
                 // Unknown input
                 return null;
-            }
-        }
-
-        public void Timestamp(Uri timestampingAuthority)
-        {
-            Timestamp(timestampingAuthority, DefaultDigestAlgorithmName);
-        }
-
-        public void Timestamp(Uri timestampingAuthority, string requestedDigestAlgorithmName)
-        {
-            var digestAlgorithmOid = CryptoConfig.MapNameToOID(requestedDigestAlgorithmName);
-            if (digestAlgorithmOid == null)
-            {
-                throw new InvalidOperationException("Unknown digest algorithm: " + requestedDigestAlgorithmName);
-            }
-
-            // Get the encrypted digest to timestamp
-            byte[] digest;
-            using (var cms = NativeCms.Decode(_signature.Encode(), detached: false))
-            {
-                digest = cms.GetEncryptedDigest();
-            }
-
-            // Request a timestamp and add it to the signature as an unsigned attribute
-            var timestamp = RFC3161.RequestTimestamp(digest, digestAlgorithmOid, timestampingAuthority);
-
-            // Build the certificate chain locally to ensure we store the whole thing
-            var chain = new X509Chain();
-            if (!chain.Build(timestamp.SignerInfos[0].Certificate))
-            {
-                throw new InvalidOperationException("Unable to build certificate chain for timestamp!");
-            }
-
-            // Reopen the timestamp as a native cms so we can modify it
-            byte[] rawTimestamp;
-            using (var cms = NativeCms.Decode(timestamp.Encode(), detached: false))
-            {
-                cms.AddCertificates(chain.ChainElements
-                    .Cast<X509ChainElement>()
-                    .Where(c => !timestamp.Certificates.Contains(c.Certificate))
-                    .Select(c => c.Certificate.Export(X509ContentType.Cert)));
-                rawTimestamp = cms.Encode();
-            }
-
-            // Reopen the signature as a native cms so we can modify it
-            SignedCms newSignature = new SignedCms();
-            using (var cms = NativeCms.Decode(_signature.Encode(), detached: false))
-            {
-                cms.AddTimestamp(rawTimestamp);
-                var newSig = cms.Encode();
-                newSignature.Decode(newSig);
-            }
-
-            // Reset the signature
-            SetSignature(newSignature);
-        }
-
-        /// <summary>
-        /// Signs the signature request with the specified certificate. Uses only the Operating
-        /// System certificate store (if present) to build the full chain for the signing cert.
-        /// </summary>
-        /// <param name="signingCert">The certificate and private key to sign the document with</param>
-        public void Sign(X509Certificate2 signingCert)
-        {
-            Sign(signingCert, null, null);
-        }
-
-        /// <summary>
-        /// Signs the signature request with the specified certificate,
-        /// and uses the provided additional certificates (along with the Operating System certificate
-        /// store, if present) to build the full chain for the signing cert and embed that in the
-        /// signature.
-        /// </summary>
-        /// <param name="signingCert">The certificate and private key to sign the document with</param>
-        /// <param name="chainBuildingCertificates">Additional certificates to use when building the chain to embed</param>
-        public void Sign(X509Certificate2 signingCert, X509Certificate2Collection chainBuildingCertificates)
-        {
-            Sign(signingCert, chainBuildingCertificates, null);
-        }
-
-        /// <summary>
-        /// Signs the signature request with the specified certificate, embeds all the specified additional certificates
-        /// in the signature, and uses the provided additional certificates (along with the Operating
-        /// System certificate store, if present) to build the full chain for the signing cert and
-        /// embed that in the signature.
-        /// </summary>
-        /// <param name="signingCert">The certificate and private key to sign the document with</param>
-        /// <param name="chainBuildingCertificates">Additional certificates to use when building the chain to embed</param>
-        /// <param name="certificatesToEmbed">Additional certificates to add to the signature</param>
-        public void Sign(X509Certificate2 signingCert, X509Certificate2Collection chainBuildingCertificates, X509Certificate2Collection certificatesToEmbed)
-        {
-            if (_signature != null)
-            {
-                throw new InvalidOperationException("A signature already exists");
-            }
-
-            // Create the content info
-            var content = new ContentInfo(Payload.Encode());
-
-            // Create the signer
-            var signer = new CmsSigner(SubjectIdentifierType.SubjectKeyIdentifier, signingCert);
-            var signingTime = new Pkcs9SigningTime(DateTime.UtcNow);
-            signer.SignedAttributes.Add(
-                new CryptographicAttributeObject(
-                    signingTime.Oid,
-                    new AsnEncodedDataCollection(signingTime)));
-
-            // We do want the whole chain in the file, but we can't control how
-            // CmsSigner builds the chain and add our additional certificates.
-            // So, we tell it not to worry and we manually build the chain and
-            // add it to the signer.
-            signer.IncludeOption = X509IncludeOption.EndCertOnly;
-
-            // Embed all the certificates in the CMS
-            var chain = new X509Chain();
-            if (chainBuildingCertificates != null)
-            {
-                chain.ChainPolicy.ExtraStore.AddRange(chainBuildingCertificates);
-            }
-            chain.Build(signingCert);
-            foreach (var element in chain.ChainElements)
-            {
-                // Don't re-embed the signing certificate!
-                if (!Equals(element.Certificate, signingCert))
-                {
-                    signer.Certificates.Add(element.Certificate);
-                }
-            }
-            if (certificatesToEmbed != null)
-            {
-                signer.Certificates.AddRange(certificatesToEmbed);
-            }
-
-            // Create the message and sign it
-            // Use a local variable so that if the signature fails to compute, this object
-            // remains in a "good" state.
-            var cms = new SignedCms(content);
-            cms.ComputeSignature(signer);
-            _signature = cms;
-        }
-
-        private void SetSignature(SignedCms cms)
-        {
-            TrustedSigningTimeUtc = null;
-            Payload = SignaturePayload.Decode(cms.ContentInfo.Content);
-            _signature = cms;
-
-            // Load the encrypted digest using the native APIs
-            using (var nativeCms = NativeCms.Decode(cms.Encode(), detached: false))
-            {
-                _encryptedDigest = nativeCms.GetEncryptedDigest();
-            }
-
-            var signerInfo = _signature.SignerInfos.Cast<SignerInfo>().FirstOrDefault();
-            if (signerInfo != null)
-            {
-                Signer = Signer.FromSignerInfo(signerInfo);
-
-                // Check for a timestamper
-                var attr = signerInfo
-                    .UnsignedAttributes
-                    .Cast<CryptographicAttributeObject>()
-                    .FirstOrDefault(c => c.Oid.Value.Equals(Constants.SignatureTimeStampTokenAttributeOid.Value, StringComparison.OrdinalIgnoreCase));
-                if (attr != null && attr.Values.Count > 0)
-                {
-                    var timestamp = new SignedCms();
-                    timestamp.Decode(attr.Values[0].RawData);
-
-                    // Check the timestamp against the data
-                    var token = RFC3161.VerifyTimestamp(_encryptedDigest, timestamp);
-                    _timestamp = token;
-
-                    if (_timestamp.IsTrusted)
-                    {
-                        TrustedSigningTimeUtc = _timestamp.TimestampUtc;
-                    }
-                }
             }
         }
 
