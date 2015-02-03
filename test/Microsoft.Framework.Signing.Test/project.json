@@ -1,11 +1,11 @@
 ﻿{
-    "version": "1.0.0-*",
-    "dependencies": {
-        "Xunit.KRunner": "1.0.0-beta1",
-        "Microsoft.Framework.Signing": "",
-        "System.IO.FileSystem": "4.0.0-*",
-        "System.IO.Compression": "4.0.0-*"
-    },
+	"version": "1.0.0-*",
+	"dependencies": {
+		"Microsoft.Framework.Signing": "",
+		"xunit.runner.kre": "1.0.0-*",
+		"System.IO.FileSystem": "4.0.0-*",
+		"System.IO.Compression": "4.0.0-*"
+	},
     "commands": {
         "test": "Xunit.KRunner"
     },

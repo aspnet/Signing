@@ -2,8 +2,7 @@
     "version": "0.2.1-*",
     "dependencies": {
         "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
-        "Microsoft.Framework.CommandLineUtils": "",
-        "Microsoft.Framework.Asn1": ""
+        "Microsoft.Framework.CommandLineUtils": ""
     },
 
     "commands": {

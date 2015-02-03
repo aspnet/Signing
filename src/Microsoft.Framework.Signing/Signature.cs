@@ -7,7 +7,6 @@ using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.Framework.Asn1;
 using Microsoft.Framework.Signing.Native;
 
 namespace Microsoft.Framework.Signing

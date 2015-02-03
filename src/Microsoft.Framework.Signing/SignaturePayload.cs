@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
-using Microsoft.Framework.Asn1;
 
 namespace Microsoft.Framework.Signing
 {
@@ -37,7 +36,7 @@ namespace Microsoft.Framework.Signing
         {
         }
 
-        private SignaturePayload(int version, string contentIdentifier, Oid digestAlgorithm, byte[] digest)
+        internal SignaturePayload(int version, string contentIdentifier, Oid digestAlgorithm, byte[] digest)
         {
             Version = version;
             ContentIdentifier = contentIdentifier;
@@ -63,7 +62,8 @@ namespace Microsoft.Framework.Signing
 
         public byte[] Encode()
         {
-            return DerEncoder.Encode(ToAsn1());
+            // Manually encode using ASN.1 Distinguished Encoding Rules
+            return Asn1Utils.EncodePayload(this);
         }
 
         public static SignaturePayload Compute(string fileName, string digestAlgorithm)
@@ -93,57 +93,12 @@ namespace Microsoft.Framework.Signing
 
         public static SignaturePayload Decode(byte[] content)
         {
-            var result = TryFromAsn1(BerParser.Parse(content));
+            var result = Asn1Utils.TryDecodePayload(content);
             if (result == null)
             {
                 throw new FormatException("Invalid Signature Payload value!");
             }
             return result;
-        }
-
-        internal Asn1Value ToAsn1()
-        {
-            return new Asn1Sequence(
-                new Asn1Integer(CurrentVersion),
-                new Asn1String(ContentIdentifier, Asn1StringType.UTF8String),
-                new Asn1Sequence(
-                    Asn1Oid.Parse(DigestAlgorithm.Value),
-                    new Asn1OctetString(Digest)));
-        }
-
-        internal static SignaturePayload TryFromAsn1(Asn1Value val)
-        {
-            var entry = val as Asn1Sequence;
-            if (entry == null || entry.Values.Count < 3)
-            {
-                // Invalid Payload format
-                return null;
-            }
-            var version = entry.Values[0] as Asn1Integer;
-            var contentId = entry.Values[1] as Asn1String;
-            var entryDigestedData = entry.Values[2] as Asn1Sequence;
-            if (version == null ||
-                contentId == null ||
-                entryDigestedData == null ||
-                version.Value > MaxSupportedVersion)
-            {
-                // Invalid Payload format
-                return null;
-            }
-
-            var digestAlgorithm = entryDigestedData.Values[0] as Asn1Oid;
-            var digest = entryDigestedData.Values[1] as Asn1OctetString;
-            if (digestAlgorithm == null || digest == null)
-            {
-                // Invalid Payload format
-                return null;
-            }
-
-            return new SignaturePayload(
-                (int)version.Value,
-                contentId.Value,
-                new Oid(digestAlgorithm.Oid),
-                digest.Value);
         }
     }
 }

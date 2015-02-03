@@ -1,0 +1,10 @@
+﻿NuGet-Signature-Payload DEFINITIONS AUTOMATIC TAGS ::= 
+BEGIN
+    SignaturePayload ::= SEQUENCE {
+        version             INTEGER { v1(1) },
+        contentIdentifier   UTF8String,
+        contentDigest       DigestValue }
+    DigestValue ::= SEQUENCE  {
+        digestAlgorithm     OBJECT IDENTIFIER,
+        digest              OCTET STRING }
+END

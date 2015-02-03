@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using Microsoft.Framework.Asn1;
 
 namespace Microsoft.Framework.Signing.Native
 {
