@@ -1,3 +1,5 @@
+*.metaproj
+
 [Oo]bj/
 [Bb]in/
 TestResults/
