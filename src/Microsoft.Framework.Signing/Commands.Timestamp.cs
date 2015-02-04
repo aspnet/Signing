@@ -5,9 +5,9 @@ using Microsoft.Framework.Runtime.Common.CommandLine;
 
 namespace Microsoft.Framework.Signing
 {
-    internal static partial class Commands
+    internal partial class Commands
     {
-        public static async Task<int> Timestamp(string signature, string authority, string algorithm)
+        public async Task<int> Timestamp(string signature, string authority, string algorithm)
         {
             algorithm = algorithm ?? Signature.DefaultDigestAlgorithmName;
 
@@ -27,7 +27,7 @@ namespace Microsoft.Framework.Signing
 
             // Timestamp the signature
             AnsiConsole.Output.WriteLine("Transmitting signature to timestamping authority...");
-            sig.Timestamp(new Uri(authority), algorithm);
+            Signer.Timestamp(sig, new Uri(authority), algorithm);
 
             // Write the signature back
             await sig.WriteAsync(signature);

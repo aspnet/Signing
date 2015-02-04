@@ -4,7 +4,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
-using Microsoft.Framework.Logging;
 using Microsoft.Framework.Signing.Native;
 
 namespace Microsoft.Framework.Signing
@@ -14,14 +13,6 @@ namespace Microsoft.Framework.Signing
     /// </summary>
     public class Signer
     {
-        private ILogger _logger;
-
-        public Signer() : this(NullLoggerFactory.Instance) { }
-        public Signer(ILoggerFactory loggerFactory)
-        {
-            _logger = loggerFactory.Create<Signer>();
-        }
-
         /// <summary>
         /// Prepares an unsigned signature request for the specified file, using
         /// the default digest algorithm (SHA-256, see <see cref="Signature.DefaultDigestAlgorithmName"/>).
@@ -61,7 +52,7 @@ namespace Microsoft.Framework.Signing
         /// <param name="input">The data to sign</param>
         public Signature Prepare(string contentIdentifier, Stream input)
         {
-            return Prepare(Signature.DefaultDigestAlgorithmName);
+            return Prepare(contentIdentifier, input, Signature.DefaultDigestAlgorithmName);
         }
 
         /// <summary>
@@ -72,6 +63,11 @@ namespace Microsoft.Framework.Signing
         /// <param name="digestAlgorithm">The name of the algorithm to use for the signature</param>
         public Signature Prepare(string fileName, string digestAlgorithm)
         {
+            if (string.IsNullOrEmpty(fileName))
+            {
+                throw new ArgumentNullException(nameof(fileName));
+            }
+
             using (var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.None))
             {
                 return Prepare(Path.GetFileName(fileName), stream, digestAlgorithm);
@@ -91,6 +87,11 @@ namespace Microsoft.Framework.Signing
         /// <param name="digestAlgorithm">The name of the algorithm to use for the signature</param>
         public Signature Prepare(string contentIdentifier, byte[] input, string digestAlgorithm)
         {
+            if (input == null)
+            {
+                throw new ArgumentNullException(nameof(input));
+            }
+
             using (var stream = new MemoryStream(input))
             {
                 return Prepare(contentIdentifier, stream, digestAlgorithm);
@@ -110,8 +111,26 @@ namespace Microsoft.Framework.Signing
         /// <param name="digestAlgorithm">The name of the algorithm to use for the signature</param>
         public Signature Prepare(string contentIdentifier, Stream input, string digestAlgorithm)
         {
-            var algorithm = HashAlgorithm.Create(digestAlgorithm);
+            if (string.IsNullOrEmpty(contentIdentifier))
+            {
+                throw new ArgumentNullException(nameof(contentIdentifier));
+            }
+            if (input == null)
+            {
+                throw new ArgumentNullException(nameof(input));
+            }
+            if (string.IsNullOrEmpty(digestAlgorithm))
+            {
+                throw new ArgumentNullException(nameof(digestAlgorithm));
+            }
+
             var oid = CryptoConfig.MapNameToOID(digestAlgorithm);
+            if (oid == null)
+            {
+                throw new ArgumentException("Unknown digest algorithm: " + digestAlgorithm, nameof(digestAlgorithm));
+            }
+
+            var algorithm = HashAlgorithm.Create(digestAlgorithm);
 
             // TODO: Asyncify this by reading from the stream asyncly and using Transform(Final)Block APIs on HashAlgorithm
             var digest = algorithm.ComputeHash(input);
@@ -156,6 +175,15 @@ namespace Microsoft.Framework.Signing
         /// <param name="certificatesToEmbed">Additional certificates to add to the signature</param>
         public void Sign(Signature sig, X509Certificate2 signingCert, X509Certificate2Collection chainBuildingCertificates, X509Certificate2Collection certificatesToEmbed)
         {
+            if (sig == null)
+            {
+                throw new ArgumentNullException(nameof(sig));
+            }
+            if (signingCert == null)
+            {
+                throw new ArgumentNullException(nameof(signingCert));
+            }
+
             // TODO: Investigate asyncifying this. The managed signing APIs are all synchronous, but maybe P/Invoke can help?
 
             if (sig.IsSigned)
@@ -229,12 +257,25 @@ namespace Microsoft.Framework.Signing
         /// <param name="requestedDigestAlgorithmName">The name (as supported by <see cref="CryptoConfig.MapNameToOID(string)"/>) of the digest algorithm to request</param>
         public void Timestamp(Signature sig, Uri timestampingAuthority, string requestedDigestAlgorithmName)
         {
+            if (sig == null)
+            {
+                throw new ArgumentNullException(nameof(sig));
+            }
+            if (timestampingAuthority == null)
+            {
+                throw new ArgumentNullException(nameof(timestampingAuthority));
+            }
+            if (string.IsNullOrEmpty(requestedDigestAlgorithmName))
+            {
+                throw new ArgumentNullException(nameof(requestedDigestAlgorithmName));
+            }
+
             // TODO: Investigate asyncifying this. The timestamping APIs all appear to be synchronous.
 
             var digestAlgorithmOid = CryptoConfig.MapNameToOID(requestedDigestAlgorithmName);
             if (digestAlgorithmOid == null)
             {
-                throw new InvalidOperationException("Unknown digest algorithm: " + requestedDigestAlgorithmName);
+                throw new ArgumentException("Unknown digest algorithm: " + requestedDigestAlgorithmName, nameof(requestedDigestAlgorithmName));
             }
 
             // Get the encrypted digest to timestamp

@@ -16,7 +16,8 @@ namespace Microsoft.Framework.Signing
     {
         private IApplicationEnvironment _env;
 
-        public Program(IApplicationEnvironment env) {
+        public Program(IApplicationEnvironment env)
+        {
             _env = env;
         }
 
@@ -38,25 +39,27 @@ namespace Microsoft.Framework.Signing
                 app.HelpOption("-h|--help");
                 app.VersionOption("-v|--version", String.Format("{0} {1} (Runtime: {2}; Configuration: {3})", app.Name, _env.Version, _env.RuntimeFramework, _env.Configuration));
 
-                app.Command("sigreq", sigreq =>
+                var commands = new Commands(new Signer());
+
+                app.Command("prepare", prepare =>
                 {
-                    sigreq.Description = "Creates a signing request for the specific file";
-                    var fileName = sigreq.Argument(
+                    prepare.Description = "Creates a signing request for the specific file";
+                    var fileName = prepare.Argument(
                         "filename",
                         "the name of the file to create a signature request for");
-                    var outputFile = sigreq.Option(
+                    var outputFile = prepare.Option(
                         "-o|--output",
                         "the name of the signature request file to create (defaults to the input filename with the '.sigreq' extension added)",
                         CommandOptionType.SingleValue);
-                    var digestAlgorithm = sigreq.Option(
+                    var digestAlgorithm = prepare.Option(
                         "-alg|--algorithm",
                         "the name of the digest algorithm to use",
                         CommandOptionType.SingleValue);
-                    sigreq.OnExecute(() =>
-                        Commands.CreateSigningRequest(
-                        fileName.Value,
-                        outputFile.Value(),
-                        digestAlgorithm.Value()));
+                    prepare.OnExecute(() =>
+                        commands.Prepare(
+                            fileName.Value,
+                            outputFile.Value(),
+                            digestAlgorithm.Value()));
                 }, addHelpCommand: false);
 
                 app.Command("sign", sign =>
@@ -83,7 +86,7 @@ namespace Microsoft.Framework.Signing
                     sign.Option("-t|-tr|--timestamper <timestampAuthorityUrl>", "a URL to an RFC3161-compliant timestamping authority to timestamp the signature with", CommandOptionType.SingleValue);
                     sign.Option("-td|--timestamper-algorithm <algorithmName>", "the name of the hash algorithm to use for the timestamp", CommandOptionType.SingleValue);
 
-                    sign.OnExecute(() => Commands.Sign(fileName.Value, sign.Options));
+                    sign.OnExecute(() => commands.Sign(fileName.Value, sign.Options));
                 }, addHelpCommand: false);
 
                 app.Command("timestamp", timestamp =>
@@ -92,7 +95,7 @@ namespace Microsoft.Framework.Signing
                     var signature = timestamp.Argument("signature", "the path to the signature file");
                     var authority = timestamp.Argument("url", "the path to a Authenticode trusted timestamping authority");
                     var algorithm = timestamp.Option("-alg|--algorithm <algorithmName>", "the name of the hash algorithm to use for the timestamp", CommandOptionType.SingleValue);
-                    timestamp.OnExecute(() => Commands.Timestamp(signature.Value, authority.Value, algorithm.Value()));
+                    timestamp.OnExecute(() => commands.Timestamp(signature.Value, authority.Value, algorithm.Value()));
                 }, addHelpCommand: false);
 
                 app.Command("verify", verify =>
@@ -102,7 +105,7 @@ namespace Microsoft.Framework.Signing
                     var noCheckCerts = verify.Option("-nocerts|--ignore-certificate-errors", "set this switch to ignore errors caused by untrusted certificates", CommandOptionType.NoValue);
                     var skipRevocation = verify.Option("-norevoke|--skip-revocation-check", "set this switch to ignore revocation check failures", CommandOptionType.NoValue);
                     var targetFile = verify.Option("-t|--target-file <targetFile>", "check the signature against <targetFile> (usually read from signature data)", CommandOptionType.SingleValue);
-                    verify.OnExecute(() => Commands.Verify(fileName.Value, targetFile.Value(), !noCheckCerts.HasValue(), skipRevocation.HasValue()));
+                    verify.OnExecute(() => commands.Verify(fileName.Value, targetFile.Value(), !noCheckCerts.HasValue(), skipRevocation.HasValue()));
                 }, addHelpCommand: false);
 
                 app.Command("help", help =>

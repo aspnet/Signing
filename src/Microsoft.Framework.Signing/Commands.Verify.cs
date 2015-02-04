@@ -8,9 +8,9 @@ using Microsoft.Framework.Runtime.Common.CommandLine;
 
 namespace Microsoft.Framework.Signing
 {
-    internal static partial class Commands
+    internal partial class Commands
     {
-        public static async Task<int> Verify(string signatureFile, string targetFile, bool checkCertificates, bool skipRevocationCheck)
+        public async Task<int> Verify(string signatureFile, string targetFile, bool checkCertificates, bool skipRevocationCheck)
         {
             int exitCode = 0;
 
@@ -138,7 +138,7 @@ namespace Microsoft.Framework.Signing
             AnsiConsole.Output.WriteLine("  [Issuer]");
             AnsiConsole.Output.WriteLine("    " + signer.SignerCertificate.Issuer);
             AnsiConsole.Output.WriteLine("  [SPKI]");
-            AnsiConsole.Output.WriteLine("    " + signer.Spki);
+            AnsiConsole.Output.WriteLine("    " + signer.SignerCertificate.ComputePublicKeyIdentifier());
             AnsiConsole.Output.WriteLine("  [Signature Algorithm]");
             AnsiConsole.Output.WriteLine("    " + signer.SignerCertificate.SignatureAlgorithm.FriendlyName);
             AnsiConsole.Output.WriteLine("  [Signing Time]");

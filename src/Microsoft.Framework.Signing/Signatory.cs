@@ -10,13 +10,11 @@ namespace Microsoft.Framework.Signing
 {
     public class Signatory
     {
-        public string Spki { get; private set; }
         public X509Certificate2 SignerCertificate { get; private set; }
         public DateTime? SigningTime { get; private set; }
 
-        private Signatory(string spki, X509Certificate2 signerCertificate, DateTime? signingTime)
+        private Signatory(X509Certificate2 signerCertificate, DateTime? signingTime)
         {
-            Spki = spki;
             SignerCertificate = signerCertificate;
             SigningTime = signingTime;
         }
@@ -36,7 +34,6 @@ namespace Microsoft.Framework.Signing
             }
 
             return new Signatory(
-                signerInfo.Certificate.ComputePublicKeyIdentifier(),
                 signerInfo.Certificate,
                 signingTime);
         }

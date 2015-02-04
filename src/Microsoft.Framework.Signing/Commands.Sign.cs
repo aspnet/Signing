@@ -8,9 +8,9 @@ using Microsoft.Framework.Runtime.Common.CommandLine;
 
 namespace Microsoft.Framework.Signing
 {
-    internal static partial class Commands
+    internal partial class Commands
     {
-        public static async Task<int> Sign(string fileName, IEnumerable<CommandOption> options)
+        public async Task<int> Sign(string fileName, IEnumerable<CommandOption> options)
         {
             var signOptions = SignOptions.FromOptions(fileName, options);
 
@@ -55,7 +55,7 @@ namespace Microsoft.Framework.Signing
             Signature sig = await Signature.TryDecodeAsync(fileName);
             if (sig == null)
             {
-                sig = new Signature(SignaturePayload.Compute(fileName, Signature.DefaultDigestAlgorithmName));
+                sig = Signer.Prepare(fileName, Signature.DefaultDigestAlgorithmName);
             }
 
             // Verify that the content is unsigned
@@ -66,7 +66,7 @@ namespace Microsoft.Framework.Signing
             }
 
             // Sign the file
-            sig.Sign(signingCert, includedCerts, additionalCerts);
+            Signer.Sign(sig, signingCert, includedCerts, additionalCerts);
 
             AnsiConsole.Output.WriteLine("Successfully signed.");
 
@@ -74,7 +74,7 @@ namespace Microsoft.Framework.Signing
             {
                 // Timestamp the signature
                 AnsiConsole.Output.WriteLine("Transmitting signature to timestamping authority...");
-                sig.Timestamp(new Uri(signOptions.Timestamper), signOptions.TimestamperAlgorithm ?? Signature.DefaultDigestAlgorithmName);
+                Signer.Timestamp(sig, new Uri(signOptions.Timestamper), signOptions.TimestamperAlgorithm ?? Signature.DefaultDigestAlgorithmName);
                 AnsiConsole.Output.WriteLine("Trusted timestamp applied to signature.");
             }
 

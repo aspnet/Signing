@@ -1,9 +1,8 @@
 ﻿{
-    "version": "0.2.1-*",
+    "version": "0.3.0-*",
     "dependencies": {
 		"Microsoft.Framework.CommandLineUtils": { "type": "dev", "version": "1.0.0-*" },
-        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*",
-		"Microsoft.Framework.Logging": "1.0.0-*"
+        "Microsoft.Framework.Runtime.Interfaces": "1.0.0-*"
     },
 
     "commands": {
