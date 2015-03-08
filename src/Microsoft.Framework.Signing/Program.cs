@@ -25,7 +25,7 @@ namespace Microsoft.Framework.Signing
         {
             try
             {
-#if NET45 || ASPNET50
+#if NET45 || DNX451
                 if (args.Length > 0 && string.Equals(args[0], "dbg", StringComparison.OrdinalIgnoreCase))
                 {
                     args = args.Skip(1).ToArray();
