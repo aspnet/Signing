@@ -1,4 +1,4 @@
-﻿{
+{
     "version": "0.3.0-*",
     "dependencies": {
 		"Microsoft.Framework.CommandLineUtils": { "type": "dev", "version": "1.0.0-*" },
