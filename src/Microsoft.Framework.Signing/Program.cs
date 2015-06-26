@@ -60,7 +60,7 @@ namespace Microsoft.Framework.Signing
                             fileName.Value,
                             outputFile.Value(),
                             digestAlgorithm.Value()));
-                }, addHelpCommand: false);
+                });
 
                 app.Command("sign", sign =>
                 {
@@ -87,7 +87,7 @@ namespace Microsoft.Framework.Signing
                     sign.Option("-td|--timestamper-algorithm <algorithmName>", "the name of the hash algorithm to use for the timestamp", CommandOptionType.SingleValue);
 
                     sign.OnExecute(() => commands.Sign(fileName.Value, sign.Options));
-                }, addHelpCommand: false);
+                });
 
                 app.Command("timestamp", timestamp =>
                 {
@@ -96,7 +96,7 @@ namespace Microsoft.Framework.Signing
                     var authority = timestamp.Argument("url", "the path to a Authenticode trusted timestamping authority");
                     var algorithm = timestamp.Option("-alg|--algorithm <algorithmName>", "the name of the hash algorithm to use for the timestamp", CommandOptionType.SingleValue);
                     timestamp.OnExecute(() => commands.Timestamp(signature.Value, authority.Value, algorithm.Value()));
-                }, addHelpCommand: false);
+                });
 
                 app.Command("verify", verify =>
                 {
@@ -106,14 +106,14 @@ namespace Microsoft.Framework.Signing
                     var skipRevocation = verify.Option("-norevoke|--skip-revocation-check", "set this switch to ignore revocation check failures", CommandOptionType.NoValue);
                     var targetFile = verify.Option("-t|--target-file <targetFile>", "check the signature against <targetFile> (usually read from signature data)", CommandOptionType.SingleValue);
                     verify.OnExecute(() => commands.Verify(fileName.Value, targetFile.Value(), !noCheckCerts.HasValue(), skipRevocation.HasValue()));
-                }, addHelpCommand: false);
+                });
 
                 app.Command("help", help =>
                 {
                     help.Description = "Get help on the application, or a specific command";
                     var command = help.Argument("command", "the command to get help on");
                     help.OnExecute(() => { app.ShowHelp(command.Value); return 0; });
-                }, addHelpCommand: false);
+                });
                 app.OnExecute(() => { app.ShowHelp(commandName: null); return 0; });
 
                 return app.Execute(args);
