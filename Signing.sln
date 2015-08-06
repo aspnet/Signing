@@ -14,7 +14,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{26903DA0-1
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Signing", "src\Microsoft.Framework.Signing\Microsoft.Framework.Signing.xproj", "{ECF5388F-01D0-43BE-8873-41D094CE84B9}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Signing.Test", "test\Microsoft.Framework.Signing.Test\Microsoft.Framework.Signing.Test.xproj", "{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Microsoft.Framework.Signing.Tests", "test\Microsoft.Framework.Signing.Tests\Microsoft.Framework.Signing.Tests.xproj", "{09A519E1-5A00-4845-89A6-14CC5FC6B9CD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
