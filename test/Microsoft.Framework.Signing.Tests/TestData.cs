@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Microsoft.Framework.Signing.Test
+namespace Microsoft.Framework.Signing.Tests
 {
     public static class TestData
     {
