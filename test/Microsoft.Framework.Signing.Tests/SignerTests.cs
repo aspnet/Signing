@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Xunit;
 
-namespace Microsoft.Framework.Signing.Test
+namespace Microsoft.Framework.Signing.Tests
 {
     public class SignerTests
     {
