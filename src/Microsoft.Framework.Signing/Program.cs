@@ -120,7 +120,7 @@ namespace Microsoft.Framework.Signing
             }
             catch(Exception ex)
             {
-                AnsiConsole.Error.WriteLine(ex.ToString());
+                AnsiConsole.GetError(false).WriteLine(ex.ToString());
                 return 1;
             }
         }

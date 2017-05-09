@@ -16,22 +16,24 @@ namespace Microsoft.Framework.Signing
 
             if (!sig.IsSigned)
             {
-                AnsiConsole.Error.WriteLine("File is not signed: " + signature);
+                AnsiConsole.GetError(false).WriteLine("File is not signed: " + signature);
                 return -1;
             }
             else if (sig.IsTimestamped)
             {
-                AnsiConsole.Error.WriteLine("File is already timestampped: " + signature + ". Only one timestamp may be applied");
+                AnsiConsole.GetError(false).WriteLine("File is already timestampped: " + signature + ". Only one timestamp may be applied");
                 return -1;
             }
 
+            var outConsole = AnsiConsole.GetOutput(false);
+
             // Timestamp the signature
-            AnsiConsole.Output.WriteLine("Transmitting signature to timestamping authority...");
+            outConsole.WriteLine("Transmitting signature to timestamping authority...");
             Signer.Timestamp(sig, new Uri(authority), algorithm);
 
             // Write the signature back
             await sig.WriteAsync(signature);
-            AnsiConsole.Output.WriteLine("Signature timestampped.");
+            outConsole.WriteLine("Signature timestampped.");
 
             return 0;
         }

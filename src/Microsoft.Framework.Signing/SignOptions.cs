@@ -102,18 +102,20 @@ namespace Microsoft.Framework.Signing
                 {
                     if (query.Count > 1)
                     {
-                        AnsiConsole.Error.WriteLine(@"Multiple certificates were found that meet all the given
+                        var errConsole = AnsiConsole.GetError(false);
+
+                        errConsole.WriteLine(@"Multiple certificates were found that meet all the given
         criteria. Use the -a option to choose the best
         certificate automatically or use the -sha1 option with the hash of the
         desired certificate.");
-                        AnsiConsole.Error.WriteLine("The following certificates meet all given criteria:");
+                        errConsole.WriteLine("The following certificates meet all given criteria:");
                         foreach (var cert in query)
                         {
-                            AnsiConsole.Error.WriteLine("    Issued to: " + cert.SubjectName.CommonName());
-                            AnsiConsole.Error.WriteLine("    Issued by: " + cert.IssuerName.CommonName());
-                            AnsiConsole.Error.WriteLine("    Expires:   " + cert.NotAfter.ToString("ddd MMM dd HH:mm:ss yyyy"));
-                            AnsiConsole.Error.WriteLine("    SHA1 hash: " + cert.Thumbprint);
-                            AnsiConsole.Error.WriteLine("");
+                            errConsole.WriteLine("    Issued to: " + cert.SubjectName.CommonName());
+                            errConsole.WriteLine("    Issued by: " + cert.IssuerName.CommonName());
+                            errConsole.WriteLine("    Expires:   " + cert.NotAfter.ToString("ddd MMM dd HH:mm:ss yyyy"));
+                            errConsole.WriteLine("    SHA1 hash: " + cert.Thumbprint);
+                            errConsole.WriteLine("");
                         }
                         return null;
                     }

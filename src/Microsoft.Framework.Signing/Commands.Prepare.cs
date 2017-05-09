@@ -15,14 +15,16 @@ namespace Microsoft.Framework.Signing
 
             if (File.Exists(outputFile))
             {
-                AnsiConsole.Error.WriteLine("Signature request already exists: " + outputFile);
+                AnsiConsole.GetError(false).WriteLine("Signature request already exists: " + outputFile);
                 return 1;
             }
 
+            var outConsole = AnsiConsole.GetOutput(false);
+
             // Create the signature
-            AnsiConsole.Output.WriteLine("Computing Signature Request...");
+            outConsole.WriteLine("Computing Signature Request...");
             var sig = Signer.Prepare(fileName, digestAlgorithm);
-            AnsiConsole.Output.WriteLine("Signature request written to " + outputFile);
+            outConsole.WriteLine("Signature request written to " + outputFile);
 
             // Write the unsigned request
             await sig.WriteAsync(outputFile);

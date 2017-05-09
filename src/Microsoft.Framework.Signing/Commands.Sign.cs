@@ -13,15 +13,16 @@ namespace Microsoft.Framework.Signing
         public async Task<int> Sign(string fileName, IEnumerable<CommandOption> options)
         {
             var signOptions = SignOptions.FromOptions(fileName, options);
+            var outConsole = AnsiConsole.GetOutput(false);
 
             X509Certificate2Collection includedCerts;
             var signingCert = signOptions.FindCert(out includedCerts);
             if (signingCert == null)
             {
-                AnsiConsole.Error.WriteLine("Unable to find certificate that meets the specified criteria");
+                AnsiConsole.GetError(false).WriteLine("Unable to find certificate that meets the specified criteria");
                 return 1;
             }
-            AnsiConsole.Output.WriteLine("Signing file with: " + signingCert.SubjectName.CommonName());
+            outConsole.WriteLine("Signing file with: " + signingCert.SubjectName.CommonName());
 
             // Load the private key if provided
             if (!string.IsNullOrEmpty(signOptions.CspName) && !string.IsNullOrEmpty(signOptions.KeyContainer))
@@ -38,7 +39,7 @@ namespace Microsoft.Framework.Signing
 
             if (!signingCert.HasPrivateKey)
             {
-                AnsiConsole.Error.WriteLine("Unable to find private key for certificate: " + signingCert.SubjectName.CommonName());
+                AnsiConsole.GetError(false).WriteLine("Unable to find private key for certificate: " + signingCert.SubjectName.CommonName());
                 return 1;
             }
 
@@ -61,25 +62,25 @@ namespace Microsoft.Framework.Signing
             // Verify that the content is unsigned
             if (sig.IsSigned)
             {
-                AnsiConsole.Error.WriteLine("File already signed: " + fileName);
+                AnsiConsole.GetError(false).WriteLine("File already signed: " + fileName);
                 return 1;
             }
 
             // Sign the file
             Signer.Sign(sig, signingCert, includedCerts, additionalCerts);
 
-            AnsiConsole.Output.WriteLine("Successfully signed.");
+            outConsole.WriteLine("Successfully signed.");
 
             if (!string.IsNullOrEmpty(signOptions.Timestamper))
             {
                 // Timestamp the signature
-                AnsiConsole.Output.WriteLine("Transmitting signature to timestamping authority...");
+                outConsole.WriteLine("Transmitting signature to timestamping authority...");
                 Signer.Timestamp(sig, new Uri(signOptions.Timestamper), signOptions.TimestamperAlgorithm ?? Signature.DefaultDigestAlgorithmName);
-                AnsiConsole.Output.WriteLine("Trusted timestamp applied to signature.");
+                outConsole.WriteLine("Trusted timestamp applied to signature.");
             }
 
             // Write the signature
-            AnsiConsole.Output.WriteLine("Signature saved to " + signOptions.Output);
+            outConsole.WriteLine("Signature saved to " + signOptions.Output);
             await sig.WriteAsync(signOptions.Output);
 
             return 0;
